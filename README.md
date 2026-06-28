@@ -13,3 +13,16 @@
 | [docs/기획안.md](docs/기획안.md) | 종합 사업·제품 기획안 (시장·BM·로드맵·리스크) |
 | [docs/추천엔진_설계.md](docs/추천엔진_설계.md) | 추천/예측 엔진 상세 설계 |
 | [docs/데이터소스.md](docs/데이터소스.md) | 활용 가능한 외부 데이터 소스 |
+
+## MVP (코드)
+
+성향 진단 → 규칙기반 추천 엔진의 동작하는 MVP가 [`backend/`](backend/)에 있습니다 (FastAPI).
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload   # 데모 UI: http://localhost:8000/
+pytest -q                       # 테스트 17건
+```
+
+자세한 내용은 [backend/README.md](backend/README.md) 참조.
