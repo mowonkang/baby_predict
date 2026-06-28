@@ -110,6 +110,7 @@ class RecommendationResponse(BaseModel):
     aptitude: AptitudeProfile
     stage: str
     stage_competencies: list[str]
+    study_mode: str  # 학습성향 기반 권장 학습 방식 요약
     recommendations: list[Recommendation]
 
 

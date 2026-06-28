@@ -64,3 +64,41 @@ def test_free_resource_included():
     # R001(무료, 미취학 한글) 가 예산 0 필터에서 포함돼야 한다
     out = recommend(StudentProfile(age_years=5, budget_max=0), top_k=50)
     assert any(r.cost == 0 for r in out.recommendations)
+
+
+def _style_profile(**style):
+    from app.models import LearningStyle
+    return AptitudeProfile(learning_style=LearningStyle(**style))
+
+
+def test_self_directed_boosts_online_lecture():
+    """자기주도 성향이 높으면 인강(R020) 점수가 더 높다."""
+    hi = _style_profile(self_direction=1.0)
+    lo = _style_profile(self_direction=0.0)
+    out_hi = recommend(StudentProfile(age_years=14, aptitude=hi), top_k=50)
+    out_lo = recommend(StudentProfile(age_years=14, aptitude=lo), top_k=50)
+
+    def score_of(resp, rid):
+        return next(r.score for r in resp.recommendations if r.resource_id == rid)
+
+    assert score_of(out_hi, "R020") > score_of(out_lo, "R020")
+
+
+def test_managed_style_boosts_academy():
+    """자기주도가 낮은(관리형) 학생은 학원(R021) 점수가 더 높다."""
+    managed = _style_profile(self_direction=0.0)
+    independent = _style_profile(self_direction=1.0)
+    out_m = recommend(StudentProfile(age_years=14, aptitude=managed), top_k=50)
+    out_i = recommend(StudentProfile(age_years=14, aptitude=independent), top_k=50)
+
+    def score_of(resp, rid):
+        return next(r.score for r in resp.recommendations if r.resource_id == rid)
+
+    assert score_of(out_m, "R021") > score_of(out_i, "R021")
+
+
+def test_study_mode_summary():
+    out_sd = recommend(StudentProfile(age_years=14, aptitude=_style_profile(self_direction=1.0)))
+    assert "자기주도" in out_sd.study_mode
+    out_mg = recommend(StudentProfile(age_years=14, aptitude=_style_profile(self_direction=0.0)))
+    assert "관리" in out_mg.study_mode

@@ -35,6 +35,7 @@ def test_recommend_endpoint():
     body = res.json()
     assert body["stage"] == "중등"
     assert body["aptitude"]["interest"]["investigative"] == 1.0
+    assert isinstance(body["study_mode"], str) and body["study_mode"]
     assert len(body["recommendations"]) > 0
     assert all(r["cost"] <= 200000 for r in body["recommendations"])
 

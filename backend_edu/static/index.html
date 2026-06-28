@@ -140,6 +140,7 @@
       // 커리큘럼 추천
       html += `<div class="card"><h3>${rec.stage} 추천 커리큘럼</h3>`;
       html += `<div class="meta">핵심 역량: ${(rec.stage_competencies||[]).join(', ')}</div>`;
+      if (rec.study_mode) html += `<div class="track" style="background:#0984e3;margin-top:8px">🧭 ${rec.study_mode}</div>`;
       (rec.recommendations||[]).forEach(r => {
         const cost = r.cost === 0 ? '무료' : r.cost.toLocaleString() + '원';
         html += `<div class="rec">
