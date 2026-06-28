@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduPath — 우리 아이 적성 기반 교육 로드맵 (데모)</title>
+  <style>
+    :root { --pri:#6c5ce7; --bg:#f5f5fb; --card:#fff; --muted:#7a7f9a; --ok:#00b894; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      margin:0; background:var(--bg); color:#1f2230; }
+    header { background:var(--pri); color:#fff; padding:20px 16px; }
+    header h1 { margin:0; font-size:20px; }
+    header p { margin:6px 0 0; opacity:.92; font-size:13px; }
+    main { max-width:760px; margin:0 auto; padding:16px; }
+    .card { background:var(--card); border-radius:14px; padding:18px; margin:14px 0;
+      box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    label { display:block; font-size:14px; margin:10px 0 4px; font-weight:600; }
+    input { width:100%; padding:10px; border:1px solid #dcdef0; border-radius:8px; font-size:14px; }
+    h3 { margin:0 0 8px; }
+    .q { margin:12px 0; }
+    .q .qt { font-size:14px; margin-bottom:6px; }
+    .scale { display:flex; gap:6px; }
+    .scale button { flex:1; padding:8px 0; border:1px solid #dcdef0; background:#fff;
+      border-radius:8px; cursor:pointer; font-size:13px; }
+    .scale button.sel { background:var(--pri); color:#fff; border-color:var(--pri); }
+    .go { width:100%; padding:14px; background:var(--pri); color:#fff; border:none;
+      border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; margin-top:10px; }
+    .rec { border-left:4px solid var(--pri); padding:10px 12px; margin:10px 0; background:#fbfbff; border-radius:8px; }
+    .rec .top { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+    .rec .name { font-weight:700; }
+    .tag { font-size:11px; padding:2px 8px; border-radius:10px; background:#efecff; color:var(--pri); white-space:nowrap; }
+    .reasons { margin:6px 0 0; padding-left:18px; color:var(--muted); font-size:12.5px; }
+    .cost { color:#111; font-weight:600; font-size:13px; }
+    .meta { color:var(--muted); font-size:13px; }
+    .bar { height:6px; background:#ece9f8; border-radius:4px; overflow:hidden; margin-top:4px; }
+    .bar > i { display:block; height:100%; background:var(--pri); }
+    .track { background:var(--ok); color:#fff; padding:10px 14px; border-radius:10px; font-weight:700; }
+    .tl { position:relative; margin:14px 0 0; padding-left:18px; border-left:2px solid #d8d4f3; }
+    .ms { position:relative; margin:0 0 16px; }
+    .ms::before { content:''; position:absolute; left:-25px; top:3px; width:12px; height:12px;
+      border-radius:50%; background:var(--pri); border:2px solid #fff; }
+    .ms .stage { font-weight:700; }
+    .chips { margin:4px 0; }
+    .chip { display:inline-block; font-size:12px; background:#f0effb; color:#444; padding:2px 8px;
+      border-radius:10px; margin:2px 4px 2px 0; }
+    .decision { font-size:12.5px; color:#c0392b; margin-top:4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎓 EduPath</h1>
+    <p>아이 적성을 진단하면, 지금 할 커리큘럼과 미취학~대학 교육 로드맵을 제안해드려요 (MVP 데모)</p>
+  </header>
+  <main>
+    <div class="card">
+      <label for="age">만 나이</label>
+      <input id="age" type="number" min="3" max="25" value="11" />
+      <label for="budget">리소스당 최대 예산 (원, 비우면 제한 없음)</label>
+      <input id="budget" type="number" min="0" placeholder="예: 200000" />
+    </div>
+
+    <div class="card">
+      <h3>적성 진단</h3>
+      <div id="survey"><em class="meta">설문 불러오는 중…</em></div>
+      <button class="go" onclick="submit()">추천 + 로드맵 받기</button>
+    </div>
+
+    <div id="result"></div>
+  </main>
+
+  <script>
+    const answers = {};
+    let questions = [];
+
+    async function loadSurvey() {
+      const data = await (await fetch('/api/survey')).json();
+      questions = data.questions;
+      const el = document.getElementById('survey');
+      el.innerHTML = '';
+      questions.forEach(q => {
+        const wrap = document.createElement('div'); wrap.className = 'q';
+        const t = document.createElement('div'); t.className = 'qt'; t.textContent = q.text;
+        const scale = document.createElement('div'); scale.className = 'scale';
+        for (let v = 1; v <= 5; v++) {
+          const b = document.createElement('button'); b.textContent = v;
+          b.onclick = () => {
+            answers[q.id] = v;
+            [...scale.children].forEach(c => c.classList.remove('sel'));
+            b.classList.add('sel');
+          };
+          scale.appendChild(b);
+        }
+        wrap.appendChild(t); wrap.appendChild(scale); el.appendChild(wrap);
+      });
+    }
+
+    const TYPE_LABEL = {
+      national_pick: '인기 커리큘럼', aptitude_match: '적성맞춤', stage_core: '단계핵심'
+    };
+
+    function buildBody() {
+      const age = parseInt(document.getElementById('age').value || '0', 10);
+      const budgetRaw = document.getElementById('budget').value;
+      const survey = Object.entries(answers).map(([question_id, value]) => ({ question_id, value }));
+      const body = { age_years: age, survey };
+      if (budgetRaw) body.budget_max = parseInt(budgetRaw, 10);
+      return body;
+    }
+
+    async function submit() {
+      const body = buildBody();
+      const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+      const [rec, path] = await Promise.all([
+        fetch('/api/recommend', opts).then(r => r.json()),
+        fetch('/api/pathway', opts).then(r => r.json()),
+      ]);
+      render(rec, path);
+    }
+
+    function render(rec, path) {
+      const el = document.getElementById('result');
+      let html = '';
+
+      // 교육 path
+      const pw = path.pathway;
+      html += `<div class="card"><h3>📍 교육 로드맵</h3>`;
+      html += `<div class="track">추천 진로 계열: ${pw.recommended_track}</div>`;
+      html += `<div class="meta" style="margin:8px 0">${(pw.rationale||[]).join(' · ')}</div>`;
+      html += `<div class="tl">`;
+      pw.milestones.forEach(m => {
+        html += `<div class="ms"><div class="stage">${m.stage}</div>
+          <div class="chips">${m.focus.map(f => `<span class="chip">${f}</span>`).join('')}</div>
+          <div class="meta">활동: ${(m.activities||[]).join(', ') || '-'}</div>
+          ${m.decision ? `<div class="decision">⚑ 의사결정: ${m.decision}</div>` : ''}
+        </div>`;
+      });
+      html += `</div></div>`;
+
+      // 커리큘럼 추천
+      html += `<div class="card"><h3>${rec.stage} 추천 커리큘럼</h3>`;
+      html += `<div class="meta">핵심 역량: ${(rec.stage_competencies||[]).join(', ')}</div>`;
+      (rec.recommendations||[]).forEach(r => {
+        const cost = r.cost === 0 ? '무료' : r.cost.toLocaleString() + '원';
+        html += `<div class="rec">
+          <div class="top"><span class="name">${r.name}</span>
+            <span class="tag">${TYPE_LABEL[r.type] || r.type}</span></div>
+          <div class="meta">${r.area} · <span class="cost">${cost}</span></div>
+          <div class="bar"><i style="width:${Math.round(r.score*100)}%"></i></div>
+          <ul class="reasons">${r.reasons.map(x => `<li>${x}</li>`).join('')}</ul>
+        </div>`;
+      });
+      html += `</div>`;
+
+      el.innerHTML = html;
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    loadSurvey();
+  </script>
+</body>
+</html>
