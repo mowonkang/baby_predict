@@ -56,6 +56,24 @@ def test_pathway_endpoint():
     assert body["pathway"]["milestones"][-1]["stage"] == "대학"
 
 
+def test_subjects_endpoint():
+    payload = {
+        "age_years": 16,
+        "survey": [
+            {"question_id": "i_i1", "value": 5},
+            {"question_id": "i_i2", "value": 5},
+        ],
+    }
+    res = client.post("/api/subjects", json=payload)
+    assert res.status_code == 200
+    body = res.json()
+    assert "공통" in body["groups"]
+    assert len(body["groups"]["공통"]) >= 1
+    # 탐구형 → 진로선택에 과학/수학 과목
+    career = {p["name"] for p in body["groups"]["진로선택"]}
+    assert career  # 비어있지 않아야
+
+
 def test_recommend_validation_error():
     # 만 나이 범위 초과 → 422
     res = client.post("/api/recommend", json={"age_years": 999})

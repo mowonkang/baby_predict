@@ -41,3 +41,11 @@ def test_pathway_milestones_have_focus():
     pw = build_pathway(_profile(14, social=0.9))
     for m in pw.milestones:
         assert m.focus, "각 마일스톤에는 집중 영역이 있어야 한다"
+
+
+def test_decision_reflects_real_system():
+    """중등 이전(초등 고학년) 학생의 path에 실제 제도 기반 의사결정(고교 유형)이 포함된다."""
+    pw = build_pathway(_profile(11, investigative=0.9))
+    decisions = " ".join(m.decision for m in pw.milestones if m.decision)
+    assert "고교" in decisions
+    assert "2028" in decisions  # 2028 통합형 수능·내신 5등급제 반영

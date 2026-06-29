@@ -3,6 +3,10 @@
 docs/edu/추천엔진_설계.md §2 참조.
 backend/app/temperament.py 의 스코어링 패턴을 교육 도메인에 적용.
 각 문항은 하나의 차원에 매핑되며 reverse=True 면 역채점. 리커트 1~5 → 0~1.
+
+흥미 6유형(RIASEC)은 교육부·커리어넷의 '직업흥미검사'(공공 무료 검사)와 **동일한 Holland 이론**
+기반이므로 결과 호환·연계가 가능하다. 단, 본 결과는 의학·심리 '진단'이 아니라 추천을 위한
+'참고용 선호 프로파일'로 한정한다(규제·윤리: docs/edu/교육현황_리서치.md §6).
 """
 from __future__ import annotations
 

@@ -56,15 +56,17 @@ pytest -q                       # 테스트 17건
 | [docs/edu/추천엔진_설계.md](docs/edu/추천엔진_설계.md) | 적성 진단 + 추천 + path 생성 설계 |
 | [docs/edu/데이터소스.md](docs/edu/데이터소스.md) | 교육 외부 데이터 소스 |
 
-### MVP (코드)
+### MVP (코드 + 앱)
 
-적성 진단 → 추천 + 교육 path 생성 MVP가 [`backend_edu/`](backend_edu/)에 있습니다 (FastAPI).
+적성 진단 → 추천 + 교육 path + 고교 과목 추천 MVP가 [`backend_edu/`](backend_edu/)에 있습니다 (FastAPI + 모바일 우선 웹앱/PWA).
+
+**원클릭 실행**: 루트의 **`start.bat`**(Windows) 더블클릭 또는 `bash start.sh`(Mac/Linux) → 브라우저에 앱이 자동으로 열립니다.
+비개발자용 안내: [docs/edu/실행방법.md](docs/edu/실행방법.md) · 앱 디자인: [docs/edu/앱_디자인.md](docs/edu/앱_디자인.md)
 
 ```bash
-cd backend_edu
-pip install -r requirements.txt
-uvicorn app.main:app --reload   # 데모 UI: http://localhost:8000/
-pytest -q                       # 테스트 25건
+cd backend_edu && pip install -r requirements.txt
+uvicorn app.main:app --reload   # 앱: http://localhost:8000/
+pytest -q                       # 테스트 36건
 ```
 
 자세한 내용은 [backend_edu/README.md](backend_edu/README.md) 참조.
