@@ -1,0 +1,15 @@
+{
+  "name": "EduPath — 적성 기반 교육 로드맵",
+  "short_name": "EduPath",
+  "description": "아이 적성을 진단해 맞춤 커리큘럼과 미취학~대학 교육 로드맵을 추천합니다.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f4fb",
+  "theme_color": "#6c5ce7",
+  "lang": "ko",
+  "icons": [
+    { "src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

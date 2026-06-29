@@ -21,13 +21,17 @@ backend_edu/
 
 ## 실행
 
+**가장 쉬운 방법 (원클릭)**: 레포 루트의 `start.bat`(Windows) 더블클릭 또는 `bash start.sh`(Mac/Linux).
+비개발자용 안내: [`../docs/edu/실행방법.md`](../docs/edu/실행방법.md)
+
+**수동 실행**:
 ```bash
 cd backend_edu
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-- 데모 UI: http://localhost:8000/
+- 앱(모바일 우선 PWA): http://localhost:8000/
 - API 문서(Swagger): http://localhost:8000/docs
 
 ## 엔드포인트
@@ -38,6 +42,7 @@ uvicorn app.main:app --reload
 | GET | `/api/survey` | 적성 진단 설문 문항 |
 | POST | `/api/recommend` | 프로필 → 커리큘럼 추천 |
 | POST | `/api/pathway` | 프로필 → 교육 path(로드맵) |
+| POST | `/api/subjects` | 프로필 → 고교 과목 추천(2022 개정: 공통/일반/진로/융합선택) |
 
 ### 예시
 

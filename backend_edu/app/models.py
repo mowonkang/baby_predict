@@ -118,3 +118,17 @@ class PathwayResponse(BaseModel):
     aptitude: AptitudeProfile
     stage: str
     pathway: EducationPathway
+
+
+class SubjectPick(BaseModel):
+    name: str
+    area: str
+    course_type: str  # 공통 / 일반선택 / 진로선택 / 융합선택
+    reasons: list[str]
+
+
+class SubjectsResponse(BaseModel):
+    aptitude: AptitudeProfile
+    note: str
+    # course_type → 추천 과목 목록
+    groups: dict[str, list[SubjectPick]]

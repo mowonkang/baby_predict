@@ -22,9 +22,11 @@ from .models import (
     PathwayResponse,
     RecommendationResponse,
     StudentProfile,
+    SubjectsResponse,
 )
 from .pathway import build_pathway
 from .recommender import recommend
+from .subjects import recommend_subjects
 
 app = FastAPI(
     title="EduPath API",
@@ -65,6 +67,13 @@ def post_pathway(profile: StudentProfile) -> PathwayResponse:
     return PathwayResponse(
         aptitude=aptitude, stage=stage.label, pathway=build_pathway(profile)
     )
+
+
+@app.post("/api/subjects", response_model=SubjectsResponse)
+def post_subjects(profile: StudentProfile) -> SubjectsResponse:
+    """프로필을 받아 적성 기반 고교 과목(2022 개정: 공통/일반/진로/융합선택) 추천."""
+    aptitude = resolve_aptitude(profile.survey, profile.aptitude)
+    return recommend_subjects(aptitude)
 
 
 # 데모 정적 페이지 (있을 때만 마운트)

@@ -2,162 +2,248 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EduPath — 우리 아이 적성 기반 교육 로드맵 (데모)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#6c5ce7" />
+  <link rel="manifest" href="/static/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/static/icon.svg" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="EduPath" />
+  <title>EduPath — 적성 기반 교육 로드맵</title>
   <style>
-    :root { --pri:#6c5ce7; --bg:#f5f5fb; --card:#fff; --muted:#7a7f9a; --ok:#00b894; }
-    * { box-sizing: border-box; }
-    body { font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-      margin:0; background:var(--bg); color:#1f2230; }
-    header { background:var(--pri); color:#fff; padding:20px 16px; }
-    header h1 { margin:0; font-size:20px; }
-    header p { margin:6px 0 0; opacity:.92; font-size:13px; }
-    main { max-width:760px; margin:0 auto; padding:16px; }
-    .card { background:var(--card); border-radius:14px; padding:18px; margin:14px 0;
-      box-shadow:0 1px 4px rgba(0,0,0,.06); }
-    label { display:block; font-size:14px; margin:10px 0 4px; font-weight:600; }
-    input { width:100%; padding:10px; border:1px solid #dcdef0; border-radius:8px; font-size:14px; }
-    h3 { margin:0 0 8px; }
-    .q { margin:12px 0; }
-    .q .qt { font-size:14px; margin-bottom:6px; }
+    :root {
+      --pri:#6c5ce7; --pri-d:#5a49d6; --bg:#f4f4fb; --card:#fff; --ink:#1f2230;
+      --muted:#7a7f9a; --ok:#00b894; --warn:#e17055; --line:#e7e7f3;
+    }
+    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html,body { margin:0; }
+    body {
+      font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+      background:var(--bg); color:var(--ink); padding-bottom:env(safe-area-inset-bottom);
+    }
+    .app { max-width:480px; margin:0 auto; min-height:100vh; background:var(--bg); position:relative; }
+    header {
+      background:linear-gradient(135deg,var(--pri),#8e7bf0); color:#fff;
+      padding:calc(18px + env(safe-area-inset-top)) 18px 18px; position:sticky; top:0; z-index:5;
+    }
+    header .brand { display:flex; align-items:center; gap:8px; font-weight:800; font-size:19px; }
+    header .sub { opacity:.9; font-size:12.5px; margin-top:4px; }
+    .steps { display:flex; gap:6px; margin-top:14px; }
+    .steps i { height:4px; flex:1; background:rgba(255,255,255,.35); border-radius:2px; }
+    .steps i.on { background:#fff; }
+    main { padding:16px; }
+    .screen { display:none; animation:fade .25s ease; }
+    .screen.active { display:block; }
+    @keyframes fade { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+    .card { background:var(--card); border-radius:16px; padding:18px; margin:0 0 14px; box-shadow:0 2px 10px rgba(40,40,90,.06); }
+    h2 { font-size:18px; margin:2px 0 12px; }
+    h3 { font-size:15px; margin:0 0 8px; }
+    label { display:block; font-size:13.5px; font-weight:700; margin:12px 0 6px; }
+    input { width:100%; padding:13px; border:1.5px solid var(--line); border-radius:11px; font-size:16px; }
+    input:focus { outline:none; border-color:var(--pri); }
+    .hint { color:var(--muted); font-size:12px; margin-top:4px; }
+    .age-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:6px; }
+    .age-grid button { padding:12px 6px; border:1.5px solid var(--line); background:#fff; border-radius:11px; font-size:13px; cursor:pointer; line-height:1.3; }
+    .age-grid button.sel { border-color:var(--pri); background:#f1eeff; color:var(--pri-d); font-weight:700; }
+    .age-grid button small { display:block; color:var(--muted); font-size:11px; font-weight:400; }
+    .q { padding:12px 0; border-bottom:1px solid var(--line); }
+    .q:last-child { border-bottom:0; }
+    .q .qt { font-size:14px; margin-bottom:8px; }
     .scale { display:flex; gap:6px; }
-    .scale button { flex:1; padding:8px 0; border:1px solid #dcdef0; background:#fff;
-      border-radius:8px; cursor:pointer; font-size:13px; }
-    .scale button.sel { background:var(--pri); color:#fff; border-color:var(--pri); }
-    .go { width:100%; padding:14px; background:var(--pri); color:#fff; border:none;
-      border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; margin-top:10px; }
-    .rec { border-left:4px solid var(--pri); padding:10px 12px; margin:10px 0; background:#fbfbff; border-radius:8px; }
-    .rec .top { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
-    .rec .name { font-weight:700; }
-    .tag { font-size:11px; padding:2px 8px; border-radius:10px; background:#efecff; color:var(--pri); white-space:nowrap; }
-    .reasons { margin:6px 0 0; padding-left:18px; color:var(--muted); font-size:12.5px; }
-    .cost { color:#111; font-weight:600; font-size:13px; }
-    .meta { color:var(--muted); font-size:13px; }
-    .bar { height:6px; background:#ece9f8; border-radius:4px; overflow:hidden; margin-top:4px; }
+    .scale button { flex:1; padding:10px 0; border:1.5px solid var(--line); background:#fff; border-radius:9px; font-size:13px; cursor:pointer; color:var(--muted); }
+    .scale button.sel { background:var(--pri); color:#fff; border-color:var(--pri); font-weight:700; }
+    .scale .lbl { font-size:10.5px; color:var(--muted); display:flex; justify-content:space-between; margin-bottom:4px; }
+    .cta { position:sticky; bottom:0; background:linear-gradient(180deg,rgba(244,244,251,0),var(--bg) 30%); padding:12px 0 16px; }
+    .btn { width:100%; padding:15px; background:var(--pri); color:#fff; border:none; border-radius:13px; font-size:16px; font-weight:800; cursor:pointer; }
+    .btn:disabled { opacity:.45; }
+    .btn.ghost { background:#fff; color:var(--pri); border:1.5px solid var(--pri); }
+    .counter { text-align:center; font-size:12.5px; color:var(--muted); margin-bottom:8px; }
+    /* 결과 */
+    .chips { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+    .chip { font-size:12px; background:#f0effb; color:#444; padding:4px 10px; border-radius:11px; }
+    .chip.pri { background:var(--pri); color:#fff; font-weight:700; }
+    .riasec .row { display:flex; align-items:center; gap:8px; margin:6px 0; font-size:12.5px; }
+    .riasec .row span { width:64px; color:var(--muted); }
+    .bar { flex:1; height:8px; background:#ece9f8; border-radius:5px; overflow:hidden; }
     .bar > i { display:block; height:100%; background:var(--pri); }
-    .track { background:var(--ok); color:#fff; padding:10px 14px; border-radius:10px; font-weight:700; }
-    .tl { position:relative; margin:14px 0 0; padding-left:18px; border-left:2px solid #d8d4f3; }
+    .track { background:var(--ok); color:#fff; padding:12px 14px; border-radius:12px; font-weight:800; font-size:15px; }
+    .mode { background:#0984e3; color:#fff; padding:10px 13px; border-radius:11px; font-size:13px; margin-top:8px; }
+    .tl { margin-top:6px; padding-left:18px; border-left:2px solid #d8d4f3; }
     .ms { position:relative; margin:0 0 16px; }
-    .ms::before { content:''; position:absolute; left:-25px; top:3px; width:12px; height:12px;
-      border-radius:50%; background:var(--pri); border:2px solid #fff; }
-    .ms .stage { font-weight:700; }
-    .chips { margin:4px 0; }
-    .chip { display:inline-block; font-size:12px; background:#f0effb; color:#444; padding:2px 8px;
-      border-radius:10px; margin:2px 4px 2px 0; }
-    .decision { font-size:12.5px; color:#c0392b; margin-top:4px; }
+    .ms::before { content:''; position:absolute; left:-25px; top:3px; width:12px; height:12px; border-radius:50%; background:var(--pri); border:2px solid #fff; box-shadow:0 0 0 2px #d8d4f3; }
+    .ms .st { font-weight:800; font-size:14px; }
+    .decision { font-size:12.5px; color:var(--warn); margin-top:4px; font-weight:600; }
+    .rec { border-left:4px solid var(--pri); padding:10px 12px; margin:9px 0; background:#fbfbff; border-radius:9px; }
+    .rec .top { display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+    .rec .nm { font-weight:700; font-size:14px; }
+    .tag { font-size:10.5px; padding:2px 8px; border-radius:10px; background:#efecff; color:var(--pri); white-space:nowrap; }
+    .reasons { margin:6px 0 0; padding-left:16px; color:var(--muted); font-size:12px; }
+    .cost { font-weight:700; font-size:12.5px; }
+    .subj-group { margin:10px 0; }
+    .subj-group .gt { font-size:13px; font-weight:800; color:var(--pri-d); margin-bottom:6px; }
+    .subj { display:inline-block; font-size:12px; background:#f1eeff; color:#3a3550; padding:5px 10px; border-radius:9px; margin:3px 5px 3px 0; }
+    .muted { color:var(--muted); font-size:12.5px; }
+    .center { text-align:center; }
   </style>
 </head>
 <body>
+<div class="app">
   <header>
-    <h1>🎓 EduPath</h1>
-    <p>아이 적성을 진단하면, 지금 할 커리큘럼과 미취학~대학 교육 로드맵을 제안해드려요 (MVP 데모)</p>
+    <div class="brand">🎓 EduPath</div>
+    <div class="sub">적성을 진단하면, 지금 할 일과 대학까지의 로드맵을 그려드려요</div>
+    <div class="steps"><i id="s0" class="on"></i><i id="s1"></i><i id="s2"></i></div>
   </header>
   <main>
-    <div class="card">
-      <label for="age">만 나이</label>
-      <input id="age" type="number" min="3" max="25" value="11" />
-      <label for="budget">리소스당 최대 예산 (원, 비우면 제한 없음)</label>
-      <input id="budget" type="number" min="0" placeholder="예: 200000" />
-    </div>
+    <!-- STEP 0: 프로필 -->
+    <section id="screen0" class="screen active">
+      <div class="card">
+        <h2>우리 아이는 지금 몇 살인가요?</h2>
+        <div class="age-grid" id="ageGrid"></div>
+        <input id="ageInput" type="number" min="3" max="25" placeholder="직접 입력 (만 나이)" style="margin-top:10px" />
+        <label for="budget">월 교육비 예산 (선택)</label>
+        <input id="budget" type="number" min="0" placeholder="예: 300000 (비우면 제한 없음)" />
+        <p class="hint">입력 정보는 이 브라우저 안에서만 쓰이며 서버에 저장되지 않습니다(데모).</p>
+      </div>
+      <div class="cta"><button class="btn" id="toSurvey" disabled>적성 진단 시작 →</button></div>
+    </section>
 
-    <div class="card">
-      <h3>적성 진단</h3>
-      <div id="survey"><em class="meta">설문 불러오는 중…</em></div>
-      <button class="go" onclick="submit()">추천 + 로드맵 받기</button>
-    </div>
+    <!-- STEP 1: 진단 -->
+    <section id="screen1" class="screen">
+      <div class="counter"><span id="answered">0</span> / <span id="total">0</span> 문항 응답</div>
+      <div class="card" id="surveyCard"><p class="muted">설문 불러오는 중…</p></div>
+      <div class="cta">
+        <button class="btn" id="toResult">결과 보기 →</button>
+        <button class="btn ghost" id="backTo0" style="margin-top:8px">← 이전</button>
+      </div>
+    </section>
 
-    <div id="result"></div>
+    <!-- STEP 2: 결과 -->
+    <section id="screen2" class="screen">
+      <div id="result"></div>
+      <div class="cta"><button class="btn ghost" id="restart">처음부터 다시</button></div>
+    </section>
   </main>
+</div>
 
-  <script>
-    const answers = {};
-    let questions = [];
+<script>
+const state = { age:null, budget:null, answers:{}, questions:[] };
+const $ = s => document.querySelector(s);
+const TYPE_LABEL = { national_pick:'인기', aptitude_match:'적성맞춤', stage_core:'단계핵심' };
+const RIASEC = { realistic:'현실형 R', investigative:'탐구형 I', artistic:'예술형 A', social:'사회형 S', enterprising:'진취형 E', conventional:'관습형 C' };
 
-    async function loadSurvey() {
-      const data = await (await fetch('/api/survey')).json();
-      questions = data.questions;
-      const el = document.getElementById('survey');
-      el.innerHTML = '';
-      questions.forEach(q => {
-        const wrap = document.createElement('div'); wrap.className = 'q';
-        const t = document.createElement('div'); t.className = 'qt'; t.textContent = q.text;
-        const scale = document.createElement('div'); scale.className = 'scale';
-        for (let v = 1; v <= 5; v++) {
-          const b = document.createElement('button'); b.textContent = v;
-          b.onclick = () => {
-            answers[q.id] = v;
-            [...scale.children].forEach(c => c.classList.remove('sel'));
-            b.classList.add('sel');
-          };
-          scale.appendChild(b);
-        }
-        wrap.appendChild(t); wrap.appendChild(scale); el.appendChild(wrap);
-      });
+const AGES = [
+  {v:5,t:'미취학',s:'4~6세'},{v:8,t:'초등 저',s:'1~2학년'},{v:10,t:'초등 중',s:'3~4학년'},
+  {v:12,t:'초등 고',s:'5~6학년'},{v:14,t:'중학생',s:'중1~3'},{v:17,t:'고등학생',s:'고1~3'}
+];
+
+function setStep(n){
+  ['screen0','screen1','screen2'].forEach((id,i)=>$('#'+id).classList.toggle('active', i===n));
+  ['s0','s1','s2'].forEach((id,i)=>$('#'+id).classList.toggle('on', i<=n));
+  window.scrollTo({top:0});
+}
+
+// --- STEP 0 ---
+function renderAges(){
+  const g = $('#ageGrid');
+  AGES.forEach(a=>{
+    const b=document.createElement('button');
+    b.innerHTML = `${a.t}<small>${a.s}</small>`;
+    b.onclick=()=>{ state.age=a.v; $('#ageInput').value=''; [...g.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); $('#toSurvey').disabled=false; };
+    g.appendChild(b);
+  });
+}
+$('#ageInput')?.addEventListener('input', e=>{
+  const v=parseInt(e.target.value,10);
+  [...$('#ageGrid').children].forEach(c=>c.classList.remove('sel'));
+  state.age = (v>=3&&v<=25)?v:null;
+  $('#toSurvey').disabled = !state.age;
+});
+
+// --- STEP 1 ---
+async function loadSurvey(){
+  const data = await (await fetch('/api/survey')).json();
+  state.questions = data.questions;
+  $('#total').textContent = data.questions.length;
+  const card=$('#surveyCard'); card.innerHTML='';
+  data.questions.forEach(q=>{
+    const wrap=document.createElement('div'); wrap.className='q';
+    wrap.innerHTML = `<div class="qt">${q.text}</div>
+      <div class="lbl scale" style="border:0;padding:0"><span>전혀 아니다</span><span>매우 그렇다</span></div>`;
+    const sc=document.createElement('div'); sc.className='scale';
+    for(let v=1;v<=5;v++){
+      const b=document.createElement('button'); b.textContent=v;
+      b.onclick=()=>{ state.answers[q.id]=v; [...sc.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); updateCount(); };
+      sc.appendChild(b);
     }
+    wrap.appendChild(sc); card.appendChild(wrap);
+  });
+}
+function updateCount(){ $('#answered').textContent = Object.keys(state.answers).length; }
 
-    const TYPE_LABEL = {
-      national_pick: '인기 커리큘럼', aptitude_match: '적성맞춤', stage_core: '단계핵심'
-    };
+// --- 결과 ---
+function payload(){
+  const survey = Object.entries(state.answers).map(([question_id,value])=>({question_id,value}));
+  const body={ age_years: state.age, survey };
+  const b=parseInt($('#budget').value,10); if(b) body.budget_max=b;
+  return body;
+}
+async function showResult(){
+  const body=payload();
+  const opt={method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)};
+  const [rec,path,subj] = await Promise.all([
+    fetch('/api/recommend',opt).then(r=>r.json()),
+    fetch('/api/pathway',opt).then(r=>r.json()),
+    fetch('/api/subjects',opt).then(r=>r.json()),
+  ]);
+  render(rec,path,subj);
+  setStep(2);
+}
+function render(rec,path,subj){
+  const I = rec.aptitude.interest, S = rec.aptitude.learning_style;
+  const top = Object.entries(I).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  let h='';
+  // 적성 요약
+  h+=`<div class="card"><h3>🧭 우리 아이 적성</h3><div class="chips">`
+    + top.map((t,i)=>`<span class="chip ${i===0?'pri':''}">${RIASEC[t[0]]}</span>`).join('') + `</div><div class="riasec">`;
+  Object.entries(I).forEach(([k,v])=>{ h+=`<div class="row"><span>${RIASEC[k]}</span><div class="bar"><i style="width:${Math.round(v*100)}%"></i></div></div>`; });
+  h+=`</div><div class="mode">🎯 ${rec.study_mode}</div></div>`;
+  // 로드맵
+  const pw=path.pathway;
+  h+=`<div class="card"><h3>🗺️ 교육 로드맵</h3><div class="track">추천 진로 계열 · ${pw.recommended_track}</div>`;
+  h+=`<div class="muted" style="margin:8px 0">${(pw.rationale||[]).join(' · ')}</div><div class="tl">`;
+  pw.milestones.forEach(m=>{
+    h+=`<div class="ms"><div class="st">${m.stage}</div>
+      <div class="chips">${m.focus.map(f=>`<span class="chip">${f}</span>`).join('')}</div>
+      <div class="muted">활동: ${(m.activities||[]).join(', ')||'-'}</div>
+      ${m.decision?`<div class="decision">⚑ ${m.decision}</div>`:''}</div>`;
+  });
+  h+=`</div></div>`;
+  // 추천 커리큘럼
+  h+=`<div class="card"><h3>📚 ${rec.stage} 추천 커리큘럼</h3><div class="muted">핵심 역량: ${(rec.stage_competencies||[]).join(', ')}</div>`;
+  (rec.recommendations||[]).slice(0,6).forEach(r=>{
+    const cost=r.cost===0?'무료':r.cost.toLocaleString()+'원';
+    h+=`<div class="rec"><div class="top"><span class="nm">${r.name}</span><span class="tag">${TYPE_LABEL[r.type]||r.type}</span></div>
+      <div class="muted">${r.area} · <span class="cost">${cost}</span></div>
+      <ul class="reasons">${r.reasons.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
+  });
+  h+=`</div>`;
+  // 고교 과목 추천
+  h+=`<div class="card"><h3>🎒 고교 과목 추천 <span class="muted">(2022 개정)</span></h3><div class="muted">${subj.note}</div>`;
+  Object.entries(subj.groups).forEach(([type,list])=>{
+    if(!list.length) return;
+    h+=`<div class="subj-group"><div class="gt">${type}</div>`
+      + list.map(s=>`<span class="subj">${s.name}</span>`).join('') + `</div>`;
+  });
+  h+=`</div>`;
+  $('#result').innerHTML=h;
+}
 
-    function buildBody() {
-      const age = parseInt(document.getElementById('age').value || '0', 10);
-      const budgetRaw = document.getElementById('budget').value;
-      const survey = Object.entries(answers).map(([question_id, value]) => ({ question_id, value }));
-      const body = { age_years: age, survey };
-      if (budgetRaw) body.budget_max = parseInt(budgetRaw, 10);
-      return body;
-    }
+// 이벤트
+$('#toSurvey').onclick=()=>{ setStep(1); if(!state.questions.length) loadSurvey(); };
+$('#backTo0').onclick=()=>setStep(0);
+$('#toResult').onclick=showResult;
+$('#restart').onclick=()=>{ state.answers={}; updateCount(); document.querySelectorAll('.scale .sel').forEach(b=>b.classList.remove('sel')); setStep(0); };
 
-    async function submit() {
-      const body = buildBody();
-      const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
-      const [rec, path] = await Promise.all([
-        fetch('/api/recommend', opts).then(r => r.json()),
-        fetch('/api/pathway', opts).then(r => r.json()),
-      ]);
-      render(rec, path);
-    }
-
-    function render(rec, path) {
-      const el = document.getElementById('result');
-      let html = '';
-
-      // 교육 path
-      const pw = path.pathway;
-      html += `<div class="card"><h3>📍 교육 로드맵</h3>`;
-      html += `<div class="track">추천 진로 계열: ${pw.recommended_track}</div>`;
-      html += `<div class="meta" style="margin:8px 0">${(pw.rationale||[]).join(' · ')}</div>`;
-      html += `<div class="tl">`;
-      pw.milestones.forEach(m => {
-        html += `<div class="ms"><div class="stage">${m.stage}</div>
-          <div class="chips">${m.focus.map(f => `<span class="chip">${f}</span>`).join('')}</div>
-          <div class="meta">활동: ${(m.activities||[]).join(', ') || '-'}</div>
-          ${m.decision ? `<div class="decision">⚑ 의사결정: ${m.decision}</div>` : ''}
-        </div>`;
-      });
-      html += `</div></div>`;
-
-      // 커리큘럼 추천
-      html += `<div class="card"><h3>${rec.stage} 추천 커리큘럼</h3>`;
-      html += `<div class="meta">핵심 역량: ${(rec.stage_competencies||[]).join(', ')}</div>`;
-      if (rec.study_mode) html += `<div class="track" style="background:#0984e3;margin-top:8px">🧭 ${rec.study_mode}</div>`;
-      (rec.recommendations||[]).forEach(r => {
-        const cost = r.cost === 0 ? '무료' : r.cost.toLocaleString() + '원';
-        html += `<div class="rec">
-          <div class="top"><span class="name">${r.name}</span>
-            <span class="tag">${TYPE_LABEL[r.type] || r.type}</span></div>
-          <div class="meta">${r.area} · <span class="cost">${cost}</span></div>
-          <div class="bar"><i style="width:${Math.round(r.score*100)}%"></i></div>
-          <ul class="reasons">${r.reasons.map(x => `<li>${x}</li>`).join('')}</ul>
-        </div>`;
-      });
-      html += `</div>`;
-
-      el.innerHTML = html;
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    loadSurvey();
-  </script>
+renderAges();
+</script>
 </body>
 </html>
