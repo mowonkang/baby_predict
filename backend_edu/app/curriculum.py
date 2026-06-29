@@ -2,6 +2,8 @@
 
 docs/edu/추천엔진_설계.md §5 의 표를 코드 데이터로 옮긴 것.
 backend/app/developmental.py 의 AgeBand 패턴을 교육 단계에 적용.
+실제 제도(자유학기제·고교학점제·2028 대입개편)를 단계 역량/활동에 반영.
+근거: docs/edu/교육현황_리서치.md
 """
 from __future__ import annotations
 
@@ -38,13 +40,13 @@ STAGES: list[Stage] = [
           core_areas=["국어", "수학", "영어"],
           activity_types=["사고력", "대회"]),
     Stage("middle", "중등", 13, 15,
-          competencies=["교과 심화", "고입·계열 준비"],
+          competencies=["교과 심화", "고입·계열 준비(자유학기 진로탐색)"],
           core_areas=["국어", "수학", "영어", "과학", "사회"],
-          activity_types=["탐구대회", "동아리"]),
+          activity_types=["탐구대회", "동아리", "진로탐색"]),
     Stage("high", "고등", 16, 18,
-          competencies=["내신·수능", "입시 전략"],
+          competencies=["내신·수능(2028 통합형)", "고교학점제 선택과목·입시 전략"],
           core_areas=["국어", "수학", "영어", "탐구"],
-          activity_types=["연구", "세특활동"]),
+          activity_types=["세특·탐구활동", "R&E 연구"]),
     Stage("university", "대학", 19, 25,
           competencies=["전공·진로 실현"],
           core_areas=["전공", "교양"],
