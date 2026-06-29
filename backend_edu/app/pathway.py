@@ -121,25 +121,47 @@ _TRACKS: dict[str, TrackTemplate] = {
     ),
 }
 
+# 일반계 기본(default) 트랙 — 뚜렷한 강점이 드러나기 전/콜드스타트의 표준 경로(인문·자연 미정).
+_GENERAL_TRACK = TrackTemplate(
+    name="일반계 (인문·자연 탐색 중)",
+    focus_by_stage={
+        "preschool": ["한글·기초수", "책 읽기 습관"],
+        "elem_low": ["국어 문해력", "기초 연산", "독서 습관"],
+        "elem_mid": ["독해력", "수학 개념", "글쓰기"],
+        "elem_high": ["국·영·수 기본기", "자기주도 학습"],
+        "middle": ["국·영·수 내신", "진로 탐색", "독서·글쓰기"],
+        "high": ["내신 전 과목", "수능 국·영·수+탐구", "학생부 서사"],
+        "university": ["희망 계열 진학"],
+    },
+    activities_by_stage={
+        "middle": ["자유학기 진로탐색"], "high": ["동아리·세특·독서활동"],
+    },
+)
+
 _DIM_LABEL = {
     "realistic": "현실형(R)", "investigative": "탐구형(I)", "artistic": "예술형(A)",
     "social": "사회형(S)", "enterprising": "진취형(E)", "conventional": "관습형(C)",
 }
 
 
-def _select_track(aptitude: AptitudeProfile) -> TrackTemplate:
-    """상위 흥미 유형으로 트랙 선택. S+E 조합 등 보정 포함."""
+def _select_track(aptitude: AptitudeProfile) -> tuple[TrackTemplate, bool]:
+    """상위 흥미 유형으로 트랙 선택. 뚜렷한 강점이 없으면 일반계 기본 트랙.
+    반환: (트랙, 일반계 기본 여부)."""
+    interest = aptitude.interest.as_dict()
     top = aptitude.interest.top_types(2)
     primary = top[0]
+    # 강점이 뚜렷하지 않으면(최고 흥미가 중립 이하) 일반계 기본 트랙
+    if interest[primary] <= 0.5:
+        return _GENERAL_TRACK, True
     # 진취형이 우세하고 사회형이 동반되면 경영 계열로
     if primary == "enterprising" and "social" in top:
-        return _TRACKS["enterprising"]
-    return _TRACKS.get(primary, _TRACKS["investigative"])
+        return _TRACKS["enterprising"], False
+    return _TRACKS.get(primary, _GENERAL_TRACK), False
 
 
 def build_pathway(profile: StudentProfile) -> EducationPathway:
-    aptitude = resolve_aptitude(profile.survey, profile.aptitude)
-    track = _select_track(aptitude)
+    aptitude = resolve_aptitude(profile.survey, profile.aptitude, profile.interests)
+    track, is_general = _select_track(aptitude)
     current: Stage = get_stage(profile.age_years)
 
     milestones: list[PathwayMilestone] = []
@@ -155,10 +177,16 @@ def build_pathway(profile: StudentProfile) -> EducationPathway:
             )
         )
 
-    top = aptitude.interest.top_types(2)
-    rationale = [
-        f"{' · '.join(_DIM_LABEL.get(t, t) for t in top)} 흥미가 우세하여 '{track.name}' path를 제안"
-    ]
+    if is_general:
+        rationale = [
+            "아직 뚜렷한 강점이 드러나지 않아, 일반계 표준 경로(기본기 + 진로 탐색)를 권장합니다.",
+            "관심 활동을 더 선택하면 계열 맞춤 로드맵으로 좁혀집니다.",
+        ]
+    else:
+        top = aptitude.interest.top_types(2)
+        rationale = [
+            f"{' · '.join(_DIM_LABEL.get(t, t) for t in top)} 흥미가 우세하여 '{track.name}' path를 제안"
+        ]
     return EducationPathway(
         recommended_track=track.name, rationale=rationale, milestones=milestones
     )

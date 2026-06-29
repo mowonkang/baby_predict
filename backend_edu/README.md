@@ -39,10 +39,14 @@ uvicorn app.main:app --reload
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | GET | `/health` | 헬스체크 |
-| GET | `/api/survey` | 적성 진단 설문 문항 |
+| POST | `/api/guide` | 나이 → **이 시기 공부할 것·준비할 것**(일반계 기준, 진단 불필요) |
+| GET | `/api/activities` | 쉬운 진단용 — 관심활동·학습성향 선택 옵션 |
+| GET | `/api/survey` | (레거시) 리커트 적성 설문 |
 | POST | `/api/recommend` | 프로필 → 커리큘럼 추천 |
-| POST | `/api/pathway` | 프로필 → 교육 path(로드맵) |
+| POST | `/api/pathway` | 프로필 → 교육 path(로드맵, 강점 없으면 일반계 기본) |
 | POST | `/api/subjects` | 프로필 → 고교 과목 추천(2022 개정: 공통/일반/진로/융합선택) |
+
+> 진단 입력은 `interests`(관심활동 선택, 권장) / `survey`(리커트) / `aptitude`(직접) 중 택1. 미입력 시 일반계 기본.
 
 ### 예시
 

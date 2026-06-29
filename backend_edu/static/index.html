@@ -8,92 +8,83 @@
   <link rel="apple-touch-icon" href="/static/icon.svg" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="EduPath" />
-  <title>EduPath — 적성 기반 교육 로드맵</title>
+  <title>EduPath — 이 시기 공부·준비 + 교육 로드맵</title>
   <style>
-    :root {
-      --pri:#6c5ce7; --pri-d:#5a49d6; --bg:#f4f4fb; --card:#fff; --ink:#1f2230;
-      --muted:#7a7f9a; --ok:#00b894; --warn:#e17055; --line:#e7e7f3;
-    }
-    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-    html,body { margin:0; }
-    body {
-      font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
-      background:var(--bg); color:var(--ink); padding-bottom:env(safe-area-inset-bottom);
-    }
-    .app { max-width:480px; margin:0 auto; min-height:100vh; background:var(--bg); position:relative; }
-    header {
-      background:linear-gradient(135deg,var(--pri),#8e7bf0); color:#fff;
-      padding:calc(18px + env(safe-area-inset-top)) 18px 18px; position:sticky; top:0; z-index:5;
-    }
-    header .brand { display:flex; align-items:center; gap:8px; font-weight:800; font-size:19px; }
-    header .sub { opacity:.9; font-size:12.5px; margin-top:4px; }
-    .steps { display:flex; gap:6px; margin-top:14px; }
-    .steps i { height:4px; flex:1; background:rgba(255,255,255,.35); border-radius:2px; }
-    .steps i.on { background:#fff; }
-    main { padding:16px; }
-    .screen { display:none; animation:fade .25s ease; }
-    .screen.active { display:block; }
-    @keyframes fade { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
-    .card { background:var(--card); border-radius:16px; padding:18px; margin:0 0 14px; box-shadow:0 2px 10px rgba(40,40,90,.06); }
-    h2 { font-size:18px; margin:2px 0 12px; }
-    h3 { font-size:15px; margin:0 0 8px; }
-    label { display:block; font-size:13.5px; font-weight:700; margin:12px 0 6px; }
-    input { width:100%; padding:13px; border:1.5px solid var(--line); border-radius:11px; font-size:16px; }
-    input:focus { outline:none; border-color:var(--pri); }
-    .hint { color:var(--muted); font-size:12px; margin-top:4px; }
-    .age-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:6px; }
-    .age-grid button { padding:12px 6px; border:1.5px solid var(--line); background:#fff; border-radius:11px; font-size:13px; cursor:pointer; line-height:1.3; }
-    .age-grid button.sel { border-color:var(--pri); background:#f1eeff; color:var(--pri-d); font-weight:700; }
-    .age-grid button small { display:block; color:var(--muted); font-size:11px; font-weight:400; }
-    .q { padding:12px 0; border-bottom:1px solid var(--line); }
-    .q:last-child { border-bottom:0; }
-    .q .qt { font-size:14px; margin-bottom:8px; }
-    .scale { display:flex; gap:6px; }
-    .scale button { flex:1; padding:10px 0; border:1.5px solid var(--line); background:#fff; border-radius:9px; font-size:13px; cursor:pointer; color:var(--muted); }
-    .scale button.sel { background:var(--pri); color:#fff; border-color:var(--pri); font-weight:700; }
-    .scale .lbl { font-size:10.5px; color:var(--muted); display:flex; justify-content:space-between; margin-bottom:4px; }
-    .cta { position:sticky; bottom:0; background:linear-gradient(180deg,rgba(244,244,251,0),var(--bg) 30%); padding:12px 0 16px; }
-    .btn { width:100%; padding:15px; background:var(--pri); color:#fff; border:none; border-radius:13px; font-size:16px; font-weight:800; cursor:pointer; }
-    .btn:disabled { opacity:.45; }
-    .btn.ghost { background:#fff; color:var(--pri); border:1.5px solid var(--pri); }
-    .counter { text-align:center; font-size:12.5px; color:var(--muted); margin-bottom:8px; }
+    :root{ --pri:#6c5ce7; --pri-d:#5a49d6; --bg:#f4f4fb; --card:#fff; --ink:#1f2230;
+      --muted:#7a7f9a; --ok:#00b894; --warn:#e17055; --line:#e7e7f3; --study:#0984e3; --prep:#00b894; }
+    *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html,body{ margin:0; }
+    body{ font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+    .app{ max-width:480px; margin:0 auto; min-height:100vh; }
+    header{ background:linear-gradient(135deg,var(--pri),#8e7bf0); color:#fff; padding:calc(18px + env(safe-area-inset-top)) 18px 18px; position:sticky; top:0; z-index:5; }
+    .brand{ display:flex; align-items:center; gap:8px; font-weight:800; font-size:19px; }
+    .sub{ opacity:.9; font-size:12.5px; margin-top:4px; }
+    .steps{ display:flex; gap:6px; margin-top:14px; }
+    .steps i{ height:4px; flex:1; background:rgba(255,255,255,.35); border-radius:2px; }
+    .steps i.on{ background:#fff; }
+    main{ padding:16px; }
+    .screen{ display:none; animation:fade .25s ease; }
+    .screen.active{ display:block; }
+    @keyframes fade{ from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+    .card{ background:var(--card); border-radius:16px; padding:18px; margin:0 0 14px; box-shadow:0 2px 10px rgba(40,40,90,.06); }
+    h2{ font-size:18px; margin:2px 0 12px; }
+    h3{ font-size:15px; margin:0 0 8px; }
+    label{ display:block; font-size:13.5px; font-weight:700; margin:12px 0 6px; }
+    input{ width:100%; padding:13px; border:1.5px solid var(--line); border-radius:11px; font-size:16px; }
+    input:focus{ outline:none; border-color:var(--pri); }
+    .hint{ color:var(--muted); font-size:12px; margin-top:4px; }
+    .age-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:6px; }
+    .age-grid button{ padding:12px 6px; border:1.5px solid var(--line); background:#fff; border-radius:11px; font-size:13px; cursor:pointer; line-height:1.3; }
+    .age-grid button.sel{ border-color:var(--pri); background:#f1eeff; color:var(--pri-d); font-weight:700; }
+    .age-grid button small{ display:block; color:var(--muted); font-size:11px; font-weight:400; }
+    .btn{ width:100%; padding:15px; background:var(--pri); color:#fff; border:none; border-radius:13px; font-size:16px; font-weight:800; cursor:pointer; }
+    .btn:disabled{ opacity:.45; }
+    .btn.ghost{ background:#fff; color:var(--pri); border:1.5px solid var(--pri); margin-top:9px; }
+    .cta{ position:sticky; bottom:0; background:linear-gradient(180deg,rgba(244,244,251,0),var(--bg) 30%); padding:12px 0 16px; }
+    /* 가이드 */
+    .headline{ font-size:16px; font-weight:800; line-height:1.4; margin-bottom:4px; }
+    .glist{ list-style:none; padding:0; margin:8px 0 0; }
+    .glist li{ padding:9px 12px; border-radius:10px; margin:6px 0; font-size:14px; display:flex; gap:8px; }
+    .glist.study li{ background:#eaf4fd; } .glist.prep li{ background:#e7f8f1; }
+    .gtag{ font-size:12px; font-weight:800; padding:2px 9px; border-radius:9px; color:#fff; }
+    .gtag.study{ background:var(--study); } .gtag.prep{ background:var(--prep); }
+    .tip{ background:#fff7ed; border:1px solid #fde2c8; color:#9a5b1e; border-radius:11px; padding:11px 13px; font-size:13px; margin-top:10px; }
+    /* 관심사 선택 */
+    .opts{ display:flex; flex-wrap:wrap; gap:8px; }
+    .opt{ padding:11px 13px; border:1.5px solid var(--line); background:#fff; border-radius:12px; font-size:13.5px; cursor:pointer; }
+    .opt.sel{ border-color:var(--pri); background:#f1eeff; color:var(--pri-d); font-weight:700; }
+    .pickcount{ text-align:center; font-size:12.5px; color:var(--muted); margin:8px 0; }
     /* 결과 */
-    .chips { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
-    .chip { font-size:12px; background:#f0effb; color:#444; padding:4px 10px; border-radius:11px; }
-    .chip.pri { background:var(--pri); color:#fff; font-weight:700; }
-    .riasec .row { display:flex; align-items:center; gap:8px; margin:6px 0; font-size:12.5px; }
-    .riasec .row span { width:64px; color:var(--muted); }
-    .bar { flex:1; height:8px; background:#ece9f8; border-radius:5px; overflow:hidden; }
-    .bar > i { display:block; height:100%; background:var(--pri); }
-    .track { background:var(--ok); color:#fff; padding:12px 14px; border-radius:12px; font-weight:800; font-size:15px; }
-    .mode { background:#0984e3; color:#fff; padding:10px 13px; border-radius:11px; font-size:13px; margin-top:8px; }
-    .tl { margin-top:6px; padding-left:18px; border-left:2px solid #d8d4f3; }
-    .ms { position:relative; margin:0 0 16px; }
-    .ms::before { content:''; position:absolute; left:-25px; top:3px; width:12px; height:12px; border-radius:50%; background:var(--pri); border:2px solid #fff; box-shadow:0 0 0 2px #d8d4f3; }
-    .ms .st { font-weight:800; font-size:14px; }
-    .decision { font-size:12.5px; color:var(--warn); margin-top:4px; font-weight:600; }
-    .rec { border-left:4px solid var(--pri); padding:10px 12px; margin:9px 0; background:#fbfbff; border-radius:9px; }
-    .rec .top { display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
-    .rec .nm { font-weight:700; font-size:14px; }
-    .tag { font-size:10.5px; padding:2px 8px; border-radius:10px; background:#efecff; color:var(--pri); white-space:nowrap; }
-    .reasons { margin:6px 0 0; padding-left:16px; color:var(--muted); font-size:12px; }
-    .cost { font-weight:700; font-size:12.5px; }
-    .subj-group { margin:10px 0; }
-    .subj-group .gt { font-size:13px; font-weight:800; color:var(--pri-d); margin-bottom:6px; }
-    .subj { display:inline-block; font-size:12px; background:#f1eeff; color:#3a3550; padding:5px 10px; border-radius:9px; margin:3px 5px 3px 0; }
-    .muted { color:var(--muted); font-size:12.5px; }
-    .center { text-align:center; }
+    .chips{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+    .chip{ font-size:12px; background:#f0effb; color:#444; padding:4px 10px; border-radius:11px; }
+    .chip.pri{ background:var(--pri); color:#fff; font-weight:700; }
+    .riasec .row{ display:flex; align-items:center; gap:8px; margin:6px 0; font-size:12.5px; }
+    .riasec .row span{ width:64px; color:var(--muted); }
+    .bar{ flex:1; height:8px; background:#ece9f8; border-radius:5px; overflow:hidden; }
+    .bar > i{ display:block; height:100%; background:var(--pri); }
+    .track{ background:var(--ok); color:#fff; padding:12px 14px; border-radius:12px; font-weight:800; font-size:15px; }
+    .mode{ background:#0984e3; color:#fff; padding:10px 13px; border-radius:11px; font-size:13px; margin-top:8px; }
+    .rec{ border-left:4px solid var(--pri); padding:10px 12px; margin:9px 0; background:#fbfbff; border-radius:9px; }
+    .rec .top{ display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+    .rec .nm{ font-weight:700; font-size:14px; }
+    .tag{ font-size:10.5px; padding:2px 8px; border-radius:10px; background:#efecff; color:var(--pri); white-space:nowrap; }
+    .reasons{ margin:6px 0 0; padding-left:16px; color:var(--muted); font-size:12px; }
+    .cost{ font-weight:700; font-size:12.5px; }
+    .subj-group{ margin:10px 0; } .subj-group .gt{ font-size:13px; font-weight:800; color:var(--pri-d); margin-bottom:6px; }
+    .subj{ display:inline-block; font-size:12px; background:#f1eeff; color:#3a3550; padding:5px 10px; border-radius:9px; margin:3px 5px 3px 0; }
+    .muted{ color:var(--muted); font-size:12.5px; }
+    svg.mind{ width:100%; height:auto; display:block; }
   </style>
 </head>
 <body>
 <div class="app">
   <header>
     <div class="brand">🎓 EduPath</div>
-    <div class="sub">적성을 진단하면, 지금 할 일과 대학까지의 로드맵을 그려드려요</div>
-    <div class="steps"><i id="s0" class="on"></i><i id="s1"></i><i id="s2"></i></div>
+    <div class="sub">이 시기에 무엇을 공부·준비할지 + 진로 로드맵을 알려드려요</div>
+    <div class="steps"><i id="s0" class="on"></i><i id="s1"></i><i id="s2"></i><i id="s3"></i></div>
   </header>
   <main>
-    <!-- STEP 0: 프로필 -->
+    <!-- 0: 나이 -->
     <section id="screen0" class="screen active">
       <div class="card">
         <h2>우리 아이는 지금 몇 살인가요?</h2>
@@ -101,23 +92,40 @@
         <input id="ageInput" type="number" min="3" max="25" placeholder="직접 입력 (만 나이)" style="margin-top:10px" />
         <label for="budget">월 교육비 예산 (선택)</label>
         <input id="budget" type="number" min="0" placeholder="예: 300000 (비우면 제한 없음)" />
-        <p class="hint">입력 정보는 이 브라우저 안에서만 쓰이며 서버에 저장되지 않습니다(데모).</p>
+        <p class="hint">입력 정보는 이 브라우저 안에서만 쓰입니다(서버 저장 없음).</p>
       </div>
-      <div class="cta"><button class="btn" id="toSurvey" disabled>적성 진단 시작 →</button></div>
+      <div class="cta"><button class="btn" id="toGuide" disabled>이 시기 공부·준비 보기 →</button></div>
     </section>
 
-    <!-- STEP 1: 진단 -->
+    <!-- 1: 가이드 (먼저) -->
     <section id="screen1" class="screen">
-      <div class="counter"><span id="answered">0</span> / <span id="total">0</span> 문항 응답</div>
-      <div class="card" id="surveyCard"><p class="muted">설문 불러오는 중…</p></div>
+      <div class="card" id="guideCard"><p class="muted">불러오는 중…</p></div>
+      <div class="cta">
+        <button class="btn" id="toPick">관심사 골라 맞춤 로드맵 보기 →</button>
+        <button class="btn ghost" id="toResultDirect">바로 결과(일반계 기준) 보기</button>
+        <button class="btn ghost" id="back0">← 나이 다시 선택</button>
+      </div>
+    </section>
+
+    <!-- 2: 관심사 선택 -->
+    <section id="screen2" class="screen">
+      <div class="card">
+        <h2>해당되는 걸 모두 골라주세요</h2>
+        <p class="hint">점수 매길 필요 없이, 우리 아이에게 맞는 것을 누르면 됩니다. (안 골라도 결과는 나와요)</p>
+        <h3 style="margin-top:12px">좋아하는 활동</h3>
+        <div class="opts" id="actOpts"></div>
+        <h3 style="margin-top:16px">학습 성향 (해당되면)</h3>
+        <div class="opts" id="styOpts"></div>
+        <div class="pickcount"><span id="picked">0</span>개 선택됨</div>
+      </div>
       <div class="cta">
         <button class="btn" id="toResult">결과 보기 →</button>
-        <button class="btn ghost" id="backTo0" style="margin-top:8px">← 이전</button>
+        <button class="btn ghost" id="back1">← 이전</button>
       </div>
     </section>
 
-    <!-- STEP 2: 결과 -->
-    <section id="screen2" class="screen">
+    <!-- 3: 결과 -->
+    <section id="screen3" class="screen">
       <div id="result"></div>
       <div class="cta"><button class="btn ghost" id="restart">처음부터 다시</button></div>
     </section>
@@ -125,123 +133,127 @@
 </div>
 
 <script>
-const state = { age:null, budget:null, answers:{}, questions:[] };
-const $ = s => document.querySelector(s);
-const TYPE_LABEL = { national_pick:'인기', aptitude_match:'적성맞춤', stage_core:'단계핵심' };
-const RIASEC = { realistic:'현실형 R', investigative:'탐구형 I', artistic:'예술형 A', social:'사회형 S', enterprising:'진취형 E', conventional:'관습형 C' };
-
-const AGES = [
-  {v:5,t:'미취학',s:'4~6세'},{v:8,t:'초등 저',s:'1~2학년'},{v:10,t:'초등 중',s:'3~4학년'},
-  {v:12,t:'초등 고',s:'5~6학년'},{v:14,t:'중학생',s:'중1~3'},{v:17,t:'고등학생',s:'고1~3'}
-];
+const state={ age:null, budget:null, picks:new Set() };
+const $=s=>document.querySelector(s);
+const TYPE_LABEL={ national_pick:'인기', aptitude_match:'적성맞춤', stage_core:'단계핵심' };
+const RIASEC={ realistic:'현실형 R', investigative:'탐구형 I', artistic:'예술형 A', social:'사회형 S', enterprising:'진취형 E', conventional:'관습형 C' };
+const AGES=[ {v:5,t:'미취학',s:'4~6세'},{v:8,t:'초등 저',s:'1~2학년'},{v:10,t:'초등 중',s:'3~4학년'},
+  {v:12,t:'초등 고',s:'5~6학년'},{v:14,t:'중학생',s:'중1~3'},{v:17,t:'고등학생',s:'고1~3'} ];
 
 function setStep(n){
-  ['screen0','screen1','screen2'].forEach((id,i)=>$('#'+id).classList.toggle('active', i===n));
-  ['s0','s1','s2'].forEach((id,i)=>$('#'+id).classList.toggle('on', i<=n));
+  ['screen0','screen1','screen2','screen3'].forEach((id,i)=>$('#'+id).classList.toggle('active',i===n));
+  ['s0','s1','s2','s3'].forEach((id,i)=>$('#'+id).classList.toggle('on',i<=n));
   window.scrollTo({top:0});
 }
-
-// --- STEP 0 ---
-function renderAges(){
-  const g = $('#ageGrid');
-  AGES.forEach(a=>{
-    const b=document.createElement('button');
-    b.innerHTML = `${a.t}<small>${a.s}</small>`;
-    b.onclick=()=>{ state.age=a.v; $('#ageInput').value=''; [...g.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); $('#toSurvey').disabled=false; };
-    g.appendChild(b);
-  });
-}
-$('#ageInput')?.addEventListener('input', e=>{
-  const v=parseInt(e.target.value,10);
-  [...$('#ageGrid').children].forEach(c=>c.classList.remove('sel'));
-  state.age = (v>=3&&v<=25)?v:null;
-  $('#toSurvey').disabled = !state.age;
-});
-
-// --- STEP 1 ---
-async function loadSurvey(){
-  const data = await (await fetch('/api/survey')).json();
-  state.questions = data.questions;
-  $('#total').textContent = data.questions.length;
-  const card=$('#surveyCard'); card.innerHTML='';
-  data.questions.forEach(q=>{
-    const wrap=document.createElement('div'); wrap.className='q';
-    wrap.innerHTML = `<div class="qt">${q.text}</div>
-      <div class="lbl scale" style="border:0;padding:0"><span>전혀 아니다</span><span>매우 그렇다</span></div>`;
-    const sc=document.createElement('div'); sc.className='scale';
-    for(let v=1;v<=5;v++){
-      const b=document.createElement('button'); b.textContent=v;
-      b.onclick=()=>{ state.answers[q.id]=v; [...sc.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); updateCount(); };
-      sc.appendChild(b);
-    }
-    wrap.appendChild(sc); card.appendChild(wrap);
-  });
-}
-function updateCount(){ $('#answered').textContent = Object.keys(state.answers).length; }
-
-// --- 결과 ---
 function payload(){
-  const survey = Object.entries(state.answers).map(([question_id,value])=>({question_id,value}));
-  const body={ age_years: state.age, survey };
-  const b=parseInt($('#budget').value,10); if(b) body.budget_max=b;
-  return body;
+  const b=parseInt($('#budget').value,10);
+  const p={ age_years:state.age, interests:[...state.picks] };
+  if(b) p.budget_max=b;
+  return p;
 }
+const post=(url)=>fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload())}).then(r=>r.json());
+
+// 0
+function renderAges(){
+  const g=$('#ageGrid');
+  AGES.forEach(a=>{ const b=document.createElement('button'); b.innerHTML=`${a.t}<small>${a.s}</small>`;
+    b.onclick=()=>{ state.age=a.v; $('#ageInput').value=''; [...g.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); $('#toGuide').disabled=false; };
+    g.appendChild(b); });
+}
+$('#ageInput').addEventListener('input',e=>{ const v=parseInt(e.target.value,10);
+  [...$('#ageGrid').children].forEach(c=>c.classList.remove('sel'));
+  state.age=(v>=3&&v<=25)?v:null; $('#toGuide').disabled=!state.age; });
+
+// 1 가이드
+async function loadGuide(){
+  const g=await post('/api/guide');
+  $('#guideCard').innerHTML=`
+    <h3>📌 ${g.stage} — 지금 할 일</h3>
+    <div class="headline">${g.headline}</div>
+    <ul class="glist study">${g.study.map(x=>`<li><span class="gtag study">공부</span>${x}</li>`).join('')}</ul>
+    <ul class="glist prep">${g.prepare.map(x=>`<li><span class="gtag prep">준비</span>${x}</li>`).join('')}</ul>
+    <div class="tip">💡 ${g.tip}</div>`;
+}
+
+// 2 관심사
+async function loadActivities(){
+  const data=await (await fetch('/api/activities')).json();
+  const mk=(o)=>{ const b=document.createElement('button'); b.className='opt'; b.textContent=o.label;
+    b.onclick=()=>{ b.classList.toggle('sel'); if(state.picks.has(o.id))state.picks.delete(o.id); else state.picks.add(o.id); $('#picked').textContent=state.picks.size; };
+    return b; };
+  const ao=$('#actOpts'); ao.innerHTML=''; data.interests.forEach(o=>ao.appendChild(mk(o)));
+  const so=$('#styOpts'); so.innerHTML=''; data.styles.forEach(o=>so.appendChild(mk(o)));
+}
+
+// 마인드맵 (SVG, 허브-가지)
+function mindmap(pw){
+  const ms=pw.milestones, n=ms.length;
+  const W=380, top=24, gap=Math.max(58, Math.min(74,(260)/Math.max(1,n-1)));
+  const H=top*2+(n-1)*gap+20, cy=H/2, cx=78, nx=196, nw=168;
+  let s=`<svg class="mind" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="inherit">`;
+  // 연결선
+  ms.forEach((m,i)=>{ const y=top+i*gap+14;
+    s+=`<path d="M ${cx+58} ${cy} C ${cx+110} ${cy}, ${nx-30} ${y}, ${nx} ${y}" stroke="#cfc9f3" stroke-width="2" fill="none"/>`; });
+  // 중심 노드(계열)
+  s+=`<g><rect x="${cx-58}" y="${cy-26}" width="116" height="52" rx="14" fill="#00b894"/>`;
+  s+=`<text x="${cx}" y="${cy-4}" fill="#fff" font-size="11" font-weight="700" text-anchor="middle">추천 계열</text>`;
+  s+=`<text x="${cx}" y="${cy+12}" fill="#fff" font-size="10" text-anchor="middle">${esc(short(pw.recommended_track,12))}</text></g>`;
+  // 단계 노드
+  ms.forEach((m,i)=>{ const y=top+i*gap+14; const cur=i===0;
+    s+=`<g><rect x="${nx}" y="${y-20}" width="${nw}" height="40" rx="12" fill="${cur?'#6c5ce7':'#efecff'}"/>`;
+    s+=`<text x="${nx+12}" y="${y-3}" fill="${cur?'#fff':'#3a3550'}" font-size="11.5" font-weight="700">${esc(m.stage)}${cur?' ·지금':''}</text>`;
+    s+=`<text x="${nx+12}" y="${y+12}" fill="${cur?'#e8e4ff':'#7a7f9a'}" font-size="10">${esc(short((m.focus||[])[0]||'',16))}</text></g>`; });
+  return s+`</svg>`;
+}
+const esc=t=>String(t).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+const short=(t,n)=>{ t=String(t); return t.length>n?t.slice(0,n-1)+'…':t; };
+
+// 결과
 async function showResult(){
-  const body=payload();
-  const opt={method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)};
-  const [rec,path,subj] = await Promise.all([
-    fetch('/api/recommend',opt).then(r=>r.json()),
-    fetch('/api/pathway',opt).then(r=>r.json()),
-    fetch('/api/subjects',opt).then(r=>r.json()),
-  ]);
-  render(rec,path,subj);
-  setStep(2);
+  const [rec,path,subj]=await Promise.all([post('/api/recommend'),post('/api/pathway'),post('/api/subjects')]);
+  const guide=await post('/api/guide');
+  render(guide,rec,path,subj); setStep(3);
 }
-function render(rec,path,subj){
-  const I = rec.aptitude.interest, S = rec.aptitude.learning_style;
-  const top = Object.entries(I).sort((a,b)=>b[1]-a[1]).slice(0,3);
+function render(guide,rec,path,subj){
+  const I=rec.aptitude.interest, pw=path.pathway;
+  const topI=Object.entries(I).sort((a,b)=>b[1]-a[1]).slice(0,3);
   let h='';
-  // 적성 요약
+  // 1) 이 시기 할 일 (먼저)
+  h+=`<div class="card"><h3>📌 ${guide.stage} — 지금 할 일</h3><div class="headline">${guide.headline}</div>
+    <ul class="glist study">${guide.study.map(x=>`<li><span class="gtag study">공부</span>${x}</li>`).join('')}</ul>
+    <ul class="glist prep">${guide.prepare.map(x=>`<li><span class="gtag prep">준비</span>${x}</li>`).join('')}</ul>
+    <div class="tip">💡 ${guide.tip}</div></div>`;
+  // 2) 마인드맵
+  h+=`<div class="card"><h3>🧠 진로 마인드맵</h3>${mindmap(pw)}
+    <div class="muted" style="margin-top:6px">${(pw.rationale||[]).join(' ')}</div></div>`;
+  // 3) 적성 요약
   h+=`<div class="card"><h3>🧭 우리 아이 적성</h3><div class="chips">`
-    + top.map((t,i)=>`<span class="chip ${i===0?'pri':''}">${RIASEC[t[0]]}</span>`).join('') + `</div><div class="riasec">`;
+    + topI.map((t,i)=>`<span class="chip ${i===0?'pri':''}">${RIASEC[t[0]]}</span>`).join('')+`</div><div class="riasec">`;
   Object.entries(I).forEach(([k,v])=>{ h+=`<div class="row"><span>${RIASEC[k]}</span><div class="bar"><i style="width:${Math.round(v*100)}%"></i></div></div>`; });
   h+=`</div><div class="mode">🎯 ${rec.study_mode}</div></div>`;
-  // 로드맵
-  const pw=path.pathway;
-  h+=`<div class="card"><h3>🗺️ 교육 로드맵</h3><div class="track">추천 진로 계열 · ${pw.recommended_track}</div>`;
-  h+=`<div class="muted" style="margin:8px 0">${(pw.rationale||[]).join(' · ')}</div><div class="tl">`;
-  pw.milestones.forEach(m=>{
-    h+=`<div class="ms"><div class="st">${m.stage}</div>
-      <div class="chips">${m.focus.map(f=>`<span class="chip">${f}</span>`).join('')}</div>
-      <div class="muted">활동: ${(m.activities||[]).join(', ')||'-'}</div>
-      ${m.decision?`<div class="decision">⚑ ${m.decision}</div>`:''}</div>`;
-  });
-  h+=`</div></div>`;
-  // 추천 커리큘럼
+  // 4) 추천 커리큘럼
   h+=`<div class="card"><h3>📚 ${rec.stage} 추천 커리큘럼</h3><div class="muted">핵심 역량: ${(rec.stage_competencies||[]).join(', ')}</div>`;
-  (rec.recommendations||[]).slice(0,6).forEach(r=>{
-    const cost=r.cost===0?'무료':r.cost.toLocaleString()+'원';
+  (rec.recommendations||[]).slice(0,6).forEach(r=>{ const c=r.cost===0?'무료':r.cost.toLocaleString()+'원';
     h+=`<div class="rec"><div class="top"><span class="nm">${r.name}</span><span class="tag">${TYPE_LABEL[r.type]||r.type}</span></div>
-      <div class="muted">${r.area} · <span class="cost">${cost}</span></div>
-      <ul class="reasons">${r.reasons.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
-  });
+      <div class="muted">${r.area} · <span class="cost">${c}</span></div>
+      <ul class="reasons">${r.reasons.map(x=>`<li>${x}</li>`).join('')}</ul></div>`; });
   h+=`</div>`;
-  // 고교 과목 추천
+  // 5) 고교 과목
   h+=`<div class="card"><h3>🎒 고교 과목 추천 <span class="muted">(2022 개정)</span></h3><div class="muted">${subj.note}</div>`;
-  Object.entries(subj.groups).forEach(([type,list])=>{
-    if(!list.length) return;
-    h+=`<div class="subj-group"><div class="gt">${type}</div>`
-      + list.map(s=>`<span class="subj">${s.name}</span>`).join('') + `</div>`;
-  });
+  Object.entries(subj.groups).forEach(([t,list])=>{ if(!list.length)return;
+    h+=`<div class="subj-group"><div class="gt">${t}</div>`+list.map(s=>`<span class="subj">${s.name}</span>`).join('')+`</div>`; });
   h+=`</div>`;
   $('#result').innerHTML=h;
 }
 
 // 이벤트
-$('#toSurvey').onclick=()=>{ setStep(1); if(!state.questions.length) loadSurvey(); };
-$('#backTo0').onclick=()=>setStep(0);
+$('#toGuide').onclick=()=>{ setStep(1); loadGuide(); };
+$('#toPick').onclick=()=>{ setStep(2); if(!$('#actOpts').children.length) loadActivities(); };
+$('#toResultDirect').onclick=()=>{ state.picks.clear(); showResult(); };
+$('#back0').onclick=()=>setStep(0);
+$('#back1').onclick=()=>setStep(1);
 $('#toResult').onclick=showResult;
-$('#restart').onclick=()=>{ state.answers={}; updateCount(); document.querySelectorAll('.scale .sel').forEach(b=>b.classList.remove('sel')); setStep(0); };
+$('#restart').onclick=()=>{ state.picks.clear(); $('#picked')&&($('#picked').textContent='0'); document.querySelectorAll('.opt.sel').forEach(b=>b.classList.remove('sel')); setStep(0); };
 
 renderAges();
 </script>

@@ -72,7 +72,8 @@ class StudentProfile(BaseModel):
     budget_max: Optional[int] = Field(
         None, ge=0, description="리소스당 최대 예산(원). None이면 제한 없음"
     )
-    # 적성: 진단 설문 또는 이미 계산된 프로필 중 하나 제공
+    # 적성 입력(택1): 관심활동 선택(interests) / 리커트 설문(survey) / 이미 계산된 프로필(aptitude)
+    interests: list[str] = Field(default_factory=list, description="선택한 관심활동·학습성향 옵션 id")
     survey: list[SurveyAnswer] = Field(default_factory=list)
     aptitude: Optional[AptitudeProfile] = None
 
@@ -132,3 +133,13 @@ class SubjectsResponse(BaseModel):
     note: str
     # course_type → 추천 과목 목록
     groups: dict[str, list[SubjectPick]]
+
+
+class GuideResponse(BaseModel):
+    """이 시기에 '무엇을 공부하고 무엇을 준비할지' (일반계 기준)."""
+
+    stage: str
+    headline: str
+    study: list[str]    # 이 시기 공부할 것
+    prepare: list[str]  # 이 시기 준비할 것
+    tip: str

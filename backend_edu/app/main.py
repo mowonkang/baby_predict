@@ -16,9 +16,11 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
-from .aptitude import QUESTIONS, resolve_aptitude
+from .aptitude import ACTIVITY_OPTIONS, QUESTIONS, STYLE_OPTIONS, resolve_aptitude
 from .curriculum import get_stage
+from .guide import build_guide
 from .models import (
+    GuideResponse,
     PathwayResponse,
     RecommendationResponse,
     StudentProfile,
@@ -44,13 +46,28 @@ def health() -> dict[str, str]:
 
 @app.get("/api/survey")
 def get_survey() -> dict:
-    """적성 진단 설문 문항 목록 (흥미 RIASEC + 학습성향)."""
+    """(레거시) 리커트 적성 진단 설문 문항."""
     return {
         "questions": [
             {"id": q.id, "text": q.text, "dimension": q.dimension} for q in QUESTIONS
         ],
         "scale": {"min": 1, "max": 5, "labels": ["전혀 아니다", "보통", "매우 그렇다"]},
     }
+
+
+@app.get("/api/activities")
+def get_activities() -> dict:
+    """쉬운 진단용 — 해당되는 것을 고르는 관심활동·학습성향 옵션."""
+    return {
+        "interests": [{"id": o.id, "label": o.label} for o in ACTIVITY_OPTIONS],
+        "styles": [{"id": o.id, "label": o.label} for o in STYLE_OPTIONS],
+    }
+
+
+@app.post("/api/guide", response_model=GuideResponse)
+def post_guide(profile: StudentProfile) -> GuideResponse:
+    """이 시기에 무엇을 공부하고 무엇을 준비할지 (일반계 기준, 진단 불필요)."""
+    return build_guide(profile.age_years)
 
 
 @app.post("/api/recommend", response_model=RecommendationResponse)
@@ -62,7 +79,7 @@ def post_recommend(profile: StudentProfile) -> RecommendationResponse:
 @app.post("/api/pathway", response_model=PathwayResponse)
 def post_pathway(profile: StudentProfile) -> PathwayResponse:
     """프로필을 받아 미취학~대학 교육 path(로드맵)를 반환."""
-    aptitude = resolve_aptitude(profile.survey, profile.aptitude)
+    aptitude = resolve_aptitude(profile.survey, profile.aptitude, profile.interests)
     stage = get_stage(profile.age_years)
     return PathwayResponse(
         aptitude=aptitude, stage=stage.label, pathway=build_pathway(profile)
@@ -72,7 +89,7 @@ def post_pathway(profile: StudentProfile) -> PathwayResponse:
 @app.post("/api/subjects", response_model=SubjectsResponse)
 def post_subjects(profile: StudentProfile) -> SubjectsResponse:
     """프로필을 받아 적성 기반 고교 과목(2022 개정: 공통/일반/진로/융합선택) 추천."""
-    aptitude = resolve_aptitude(profile.survey, profile.aptitude)
+    aptitude = resolve_aptitude(profile.survey, profile.aptitude, profile.interests)
     return recommend_subjects(aptitude)
 
 

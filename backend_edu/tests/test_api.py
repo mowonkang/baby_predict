@@ -74,6 +74,29 @@ def test_subjects_endpoint():
     assert career  # 비어있지 않아야
 
 
+def test_guide_endpoint():
+    res = client.post("/api/guide", json={"age_years": 17})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["stage"] == "고등"
+    assert body["study"] and body["prepare"] and body["headline"]
+
+
+def test_activities_endpoint():
+    res = client.get("/api/activities")
+    assert res.status_code == 200
+    body = res.json()
+    assert len(body["interests"]) >= 8
+    assert len(body["styles"]) >= 1
+    assert all("id" in o and "label" in o for o in body["interests"])
+
+
+def test_recommend_with_interests():
+    res = client.post("/api/recommend", json={"age_years": 16, "interests": ["act_sci", "act_math"]})
+    assert res.status_code == 200
+    assert res.json()["aptitude"]["interest"]["investigative"] == 1.0
+
+
 def test_recommend_validation_error():
     # 만 나이 범위 초과 → 422
     res = client.post("/api/recommend", json={"age_years": 999})
