@@ -97,6 +97,23 @@ def test_recommend_with_interests():
     assert res.json()["aptitude"]["interest"]["investigative"] == 1.0
 
 
+def test_ai_track_endpoint():
+    res = client.post("/api/ai-track", json={"age_years": 14})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["stage"] == "중등"
+    assert body["skills"] and body["tip"]
+
+
+def test_careers_endpoint():
+    res = client.post("/api/careers", json={"age_years": 16, "interests": ["act_sci", "act_math", "act_comp"]})
+    assert res.status_code == 200
+    body = res.json()
+    assert len(body["careers"]) >= 1
+    c = body["careers"][0]
+    assert c["name"] and c["prepare_now"] and c["key_subjects"] and c["outlook"]
+
+
 def test_recommend_validation_error():
     # 만 나이 범위 초과 → 422
     res = client.post("/api/recommend", json={"age_years": 999})

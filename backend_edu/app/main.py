@@ -16,10 +16,14 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
+from .ai_track import build_ai_track
 from .aptitude import ACTIVITY_OPTIONS, QUESTIONS, STYLE_OPTIONS, resolve_aptitude
+from .careers import recommend_careers
 from .curriculum import get_stage
 from .guide import build_guide
 from .models import (
+    AiTrackResponse,
+    CareersResponse,
     GuideResponse,
     PathwayResponse,
     RecommendationResponse,
@@ -91,6 +95,19 @@ def post_subjects(profile: StudentProfile) -> SubjectsResponse:
     """프로필을 받아 적성 기반 고교 과목(2022 개정: 공통/일반/진로/융합선택) 추천."""
     aptitude = resolve_aptitude(profile.survey, profile.aptitude, profile.interests)
     return recommend_subjects(aptitude)
+
+
+@app.post("/api/ai-track", response_model=AiTrackResponse)
+def post_ai_track(profile: StudentProfile) -> AiTrackResponse:
+    """AI 시대 역량 축 — 이 시기에 키울 AI·디지털 역량(계열 공통, 진단 불필요)."""
+    return build_ai_track(profile.age_years)
+
+
+@app.post("/api/careers", response_model=CareersResponse)
+def post_careers(profile: StudentProfile) -> CareersResponse:
+    """적성 기반 유망 커리어(로보틱스·공학·화학·바이오·의학·AI 등) 추천 + 준비 커리큘럼."""
+    aptitude = resolve_aptitude(profile.survey, profile.aptitude, profile.interests)
+    return recommend_careers(aptitude, profile.age_years)
 
 
 # 데모 정적 페이지 (있을 때만 마운트)

@@ -45,6 +45,8 @@ uvicorn app.main:app --reload
 | POST | `/api/recommend` | 프로필 → 커리큘럼 추천 |
 | POST | `/api/pathway` | 프로필 → 교육 path(로드맵, 강점 없으면 일반계 기본) |
 | POST | `/api/subjects` | 프로필 → 고교 과목 추천(2022 개정: 공통/일반/진로/융합선택) |
+| POST | `/api/ai-track` | 나이 → **AI 시대 역량 축**(단계별 AI·디지털 역량, 계열 공통) |
+| POST | `/api/careers` | 프로필 → **유망 커리어 추천**(로보틱스·공학·화학·바이오·생명공학·의학·AI 등) + 준비 커리큘럼 |
 
 > 진단 입력은 `interests`(관심활동 선택, 권장) / `survey`(리커트) / `aptitude`(직접) 중 택1. 미입력 시 일반계 기본.
 

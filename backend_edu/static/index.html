@@ -210,11 +210,12 @@ const short=(t,n)=>{ t=String(t); return t.length>n?t.slice(0,n-1)+'…':t; };
 
 // 결과
 async function showResult(){
-  const [rec,path,subj]=await Promise.all([post('/api/recommend'),post('/api/pathway'),post('/api/subjects')]);
-  const guide=await post('/api/guide');
-  render(guide,rec,path,subj); setStep(3);
+  const [rec,path,subj,guide,ai,careers]=await Promise.all([
+    post('/api/recommend'),post('/api/pathway'),post('/api/subjects'),
+    post('/api/guide'),post('/api/ai-track'),post('/api/careers')]);
+  render(guide,ai,careers,rec,path,subj); setStep(3);
 }
-function render(guide,rec,path,subj){
+function render(guide,ai,careers,rec,path,subj){
   const I=rec.aptitude.interest, pw=path.pathway;
   const topI=Object.entries(I).sort((a,b)=>b[1]-a[1]).slice(0,3);
   let h='';
@@ -223,10 +224,25 @@ function render(guide,rec,path,subj){
     <ul class="glist study">${guide.study.map(x=>`<li><span class="gtag study">공부</span>${x}</li>`).join('')}</ul>
     <ul class="glist prep">${guide.prepare.map(x=>`<li><span class="gtag prep">준비</span>${x}</li>`).join('')}</ul>
     <div class="tip">💡 ${guide.tip}</div></div>`;
-  // 2) 마인드맵
+  // 2) AI 시대 역량 (축)
+  h+=`<div class="card"><h3>🤖 AI 시대 역량 — ${ai.stage}</h3><div class="headline">${ai.headline}</div>
+    <ul class="glist study">${ai.skills.map(x=>`<li><span class="gtag study">역량</span>${x}</li>`).join('')}</ul>
+    <div class="chips" style="margin-top:6px">${ai.tools.map(t=>`<span class="chip">${t}</span>`).join('')}</div>
+    <div class="tip">💡 ${ai.tip}</div></div>`;
+  // 3) 마인드맵
   h+=`<div class="card"><h3>🧠 진로 마인드맵</h3>${mindmap(pw)}
     <div class="muted" style="margin-top:6px">${(pw.rationale||[]).join(' ')}</div></div>`;
-  // 3) 적성 요약
+  // 4) 유망 커리어 추천
+  h+=`<div class="card"><h3>🚀 유망 커리어 추천</h3><div class="muted">${careers.note}</div>`;
+  (careers.careers||[]).forEach(c=>{
+    h+=`<div class="rec"><div class="top"><span class="nm">${c.name}</span><span class="tag">${c.field}</span></div>
+      <div class="muted">📈 ${c.outlook}</div>
+      <ul class="reasons">${c.fit_reasons.map(x=>`<li>${x}</li>`).join('')}</ul>
+      <div class="muted" style="margin-top:4px"><b>지금 준비:</b> ${c.prepare_now.join(', ')}</div>
+      <div class="chips" style="margin-top:4px">${c.key_subjects.map(s=>`<span class="subj">${s}</span>`).join('')}</div></div>`;
+  });
+  h+=`</div>`;
+  // 5) 적성 요약
   h+=`<div class="card"><h3>🧭 우리 아이 적성</h3><div class="chips">`
     + topI.map((t,i)=>`<span class="chip ${i===0?'pri':''}">${RIASEC[t[0]]}</span>`).join('')+`</div><div class="riasec">`;
   Object.entries(I).forEach(([k,v])=>{ h+=`<div class="row"><span>${RIASEC[k]}</span><div class="bar"><i style="width:${Math.round(v*100)}%"></i></div></div>`; });

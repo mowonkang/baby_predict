@@ -143,3 +143,28 @@ class GuideResponse(BaseModel):
     study: list[str]    # 이 시기 공부할 것
     prepare: list[str]  # 이 시기 준비할 것
     tip: str
+
+
+class AiTrackResponse(BaseModel):
+    """AI 시대 역량 축 — 이 시기에 키울 AI·디지털 역량(계열 공통)."""
+
+    stage: str
+    headline: str
+    skills: list[str]  # 이 시기 키울 AI·디지털 역량
+    tools: list[str]   # 추천 도구·활동
+    tip: str
+
+
+class CareerPick(BaseModel):
+    id: str
+    name: str
+    field: str
+    outlook: str           # 전망 한 줄
+    fit_reasons: list[str] # 적합 이유
+    prepare_now: list[str] # 이 시기 준비할 것
+    key_subjects: list[str]  # 핵심 고교 과목
+
+
+class CareersResponse(BaseModel):
+    note: str
+    careers: list[CareerPick]
