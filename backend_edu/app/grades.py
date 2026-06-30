@@ -94,13 +94,28 @@ LEVEL_TIP: dict[str, str] = {
 }
 
 
+# 영아(0~2세) 월령별 발달 — baby 트랙 발달 지식과 연속(전 생애주기 통합)
+INFANT_PLAN: dict[int, list[str]] = {
+    0: ["눈맞춤·옹알이에 반응하며 애착 형성", "뒤집기·배밀이 등 대근육 자극 놀이",
+        "모빌·소리로 오감 자극", "수유·수면 리듬, 영유아 건강검진·예방접종 챙기기"],
+    1: ["잡고 서기·걷기 시도(대근육)", "첫 낱말 시기 — 많이 말 걸어주기",
+        "'까꿍'·모방 놀이로 상호작용", "컵·숟가락 등 자조 시작, 그림책 읽어주기"],
+    2: ["두 단어 문장·어휘 폭증 — 풍부한 대화", "뛰기·계단 오르기 등 대근육",
+        "블록·역할놀이로 상상력", "배변훈련 시작, 매일 책 읽기 습관"],
+}
+
+
 def build_grade_plan(age_years: int, grade_key: str | None = None) -> GradePlanResponse:
     grade = grade_by_key(grade_key) if grade_key else None
     if grade is None:
         grade = grade_for_age(age_years)
+    if grade.key == "i":  # 영아는 월령(나이)별로 세분
+        todo = INFANT_PLAN.get(max(0, min(2, age_years)), GRADE_PLAN["i"])
+    else:
+        todo = GRADE_PLAN.get(grade.key, [])
     return GradePlanResponse(
         grade=grade.label, level=grade.level,
         subjects=core_subjects(grade),
-        todo=GRADE_PLAN.get(grade.key, []),
+        todo=todo,
         tip=LEVEL_TIP.get(grade.level, ""),
     )

@@ -2,6 +2,14 @@
 from app.grades import build_grade_plan, core_subjects, grade_for_age
 
 
+def test_infant_plan_varies_by_month_age():
+    p0 = " ".join(build_grade_plan(0).todo)
+    p2 = " ".join(build_grade_plan(2).todo)
+    assert "애착" in p0 or "옹알이" in p0
+    assert "두 단어" in p2 or "배변" in p2
+    assert p0 != p2  # 0세와 2세 발달 가이드가 달라야
+
+
 def test_grade_for_age():
     assert grade_for_age(1).key == "i"   # 영아(0~2)
     assert grade_for_age(5).key == "k"

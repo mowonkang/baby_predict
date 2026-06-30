@@ -83,6 +83,8 @@
     .lifeitem .ld{ width:12px; height:12px; border-radius:50%; background:#d8d4f3; margin-top:3px; flex:none; border:2px solid #fff; box-shadow:0 0 0 2px #ece9f8; }
     .lifeitem.cur .ld{ background:var(--ok); box-shadow:0 0 0 3px #c7f0e3; }
     .lifeitem.cur b{ color:var(--pri-d); }
+    .src{ font-size:11px; color:var(--muted); margin-top:10px; padding-top:8px; border-top:1px dashed var(--line); }
+    .src b{ color:#5a8; }
   </style>
 </head>
 <body>
@@ -104,7 +106,10 @@
         <input id="childName" type="text" maxlength="20" placeholder="예: 우리아이 (성취도 변화를 기록해요)" />
         <label for="budget">월 교육비 예산 (선택)</label>
         <input id="budget" type="number" min="0" placeholder="예: 300000 (비우면 제한 없음)" />
-        <p class="hint">입력 정보는 이 브라우저 안에만 저장됩니다(서버 전송 없음).</p>
+        <label for="syncCode">동기화 코드 (여러 기기에서 쓰기, 선택)</label>
+        <input id="syncCode" type="text" maxlength="40" placeholder="예: ourfamily-2026 (같은 코드로 다른 기기에서 불러오기)" />
+        <button class="btn ghost" id="loadSync" style="margin-top:8px">이 코드로 불러오기</button>
+        <p class="hint">기본은 이 브라우저에만 저장돼요. 동기화 코드를 넣으면 서버에 저장돼 다른 기기에서도 불러올 수 있어요(MVP).</p>
       </div>
       <div class="cta"><button class="btn" id="toPlan" disabled>이 학년에 할 일 보기 →</button></div>
     </section>
@@ -188,7 +193,19 @@ function planHTML(gp){
   return `<div class="gradeTag">${gp.grade} · ${gp.level}</div>
     <h3 style="margin-top:10px">📒 이 학년에 이렇게 하세요</h3>
     <ul class="glist">${gp.todo.map(x=>`<li>${mdb(x)}</li>`).join('')}</ul>
-    <div class="tip">💡 ${esc(gp.tip)}</div>`;
+    <div class="tip">💡 ${esc(gp.tip)}</div>
+    <div class="src">출처: <b>${esc(gp.source)}</b> · 갱신 ${esc(gp.updated)}</div>`;
+}
+function unitsHTML(u){
+  if(!u.units || !u.units.length) return '';
+  const groups={}; u.units.forEach(x=>{ (groups[x.subject]=groups[x.subject]||[]).push(x); });
+  let s=`<div class="card"><h3>📖 ${esc(u.grade)} 단원 — 막히면 무료강의로</h3>`;
+  Object.entries(groups).forEach(([sub,list])=>{
+    s+=`<div class="subj-group"><div class="gt">${esc(sub)}</div>`;
+    list.forEach(x=>{ s+=`<div class="opt-line">• ${esc(x.name)} → <a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.provider)}</a> <span class="free-cost">${esc(x.cost)}</span></div>`; });
+    s+=`</div>`;
+  });
+  return s+`<div class="src">출처: <b>${esc(u.source)}</b> · 갱신 ${esc(u.updated)}</div></div>`;
 }
 async function loadPlan(){
   const gp=await post('/api/grade-plan');
@@ -298,22 +315,45 @@ function lifecycleHTML(life){
   return s+`</div></div>`;
 }
 
+// 동기화 코드(서버 저장/불러오기)
+async function loadSync(){
+  const code=($('#syncCode').value||'').trim(); if(!code){ alert('동기화 코드를 입력하세요.'); return; }
+  try{
+    const r=await fetch('/api/sync/'+encodeURIComponent(code));
+    if(r.status===404){ alert('해당 코드로 저장된 데이터가 없어요. 결과를 보면 자동 저장됩니다.'); return; }
+    const p=(await r.json()).payload||{}; const nm=p.name||'우리아이';
+    if(p.name){ $('#childName').value=p.name; state.name=p.name; }
+    if(p.hist) localStorage.setItem('edupath_hist_'+nm, JSON.stringify(p.hist));
+    if(p.prof) localStorage.setItem('edupath_prof_'+nm, JSON.stringify(p.prof));
+    alert('불러왔어요! 이름·이력이 복원됐습니다.'); checkPromotion();
+  }catch(e){ alert('불러오기 실패'); }
+}
+async function saveSync(){
+  const code=($('#syncCode').value||'').trim(); if(!code) return;
+  const nm=state.name||'우리아이';
+  let prof=null; try{ prof=JSON.parse(localStorage.getItem('edupath_prof_'+nm)||'null'); }catch(e){}
+  try{ await fetch('/api/sync/save',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({code, payload:{name:nm, hist:loadHistory(), prof}})}); }catch(e){}
+}
+
 // 결과
 async function showResult(){
   state.name=($('#childName').value||'').trim();
-  const [plan,achv,rec,path,subj,ai,careers,life]=await Promise.all([
-    post('/api/grade-plan'),post('/api/achievement'),post('/api/recommend'),
+  const [plan,units,achv,rec,path,subj,ai,careers,life]=await Promise.all([
+    post('/api/grade-plan'),post('/api/units'),post('/api/achievement'),post('/api/recommend'),
     post('/api/pathway'),post('/api/subjects'),post('/api/ai-track'),post('/api/careers'),post('/api/lifecycle')]);
-  saveHistory(plan.grade); saveProfile(plan.grade);
-  render(life,plan,achv,ai,careers,rec,path,subj); setStep(3);
+  saveHistory(plan.grade); saveProfile(plan.grade); saveSync();
+  render(life,plan,units,achv,ai,careers,rec,path,subj); setStep(3);
 }
-function render(life,plan,achv,ai,careers,rec,path,subj){
+function render(life,plan,units,achv,ai,careers,rec,path,subj){
   const I=rec.aptitude.interest, pw=path.pathway, topI=Object.entries(I).sort((a,b)=>b[1]-a[1]).slice(0,3);
   let h='';
   // 0) 생애주기 타임라인
   h+=lifecycleHTML(life);
   // 1) 학년별 할 일 (주 기능)
   h+=`<div class="card">${planHTML(plan)}</div>`;
+  // 1.2) 단원 + 무료강의 링크
+  h+=unitsHTML(units);
   // 1.5) 성취도 이력 (있으면)
   h+=historyHTML();
   // 2) 과목 보완 추천 (무료·저렴 링크)
@@ -368,6 +408,7 @@ $('#back0').onclick=()=>setStep(0);
 $('#back1').onclick=()=>setStep(1);
 $('#toResult').onclick=showResult;
 $('#restart').onclick=()=>{ state.picks.clear(); state.achievements={}; setStep(0); };
+$('#loadSync').onclick=loadSync;
 
 renderAges();
 checkPromotion();

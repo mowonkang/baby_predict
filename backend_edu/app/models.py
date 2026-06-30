@@ -181,6 +181,28 @@ class GradePlanResponse(BaseModel):
     subjects: list[str]   # 핵심 과목(성취도 입력 대상)
     todo: list[str]       # 이 학년에 할 것
     tip: str
+    source: str = "2022 개정 교육과정 / 누리과정"
+    updated: str = "2026-06"
+
+
+class Unit(BaseModel):
+    subject: str
+    name: str          # 단원명
+    provider: str
+    cost: str
+    url: str
+
+
+class UnitsResponse(BaseModel):
+    grade: str
+    units: list[Unit]
+    source: str = "2022 개정 교육과정"
+    updated: str = "2026-06"
+
+
+class SyncSave(BaseModel):
+    code: str          # 동기화 코드(사용자 지정)
+    payload: dict      # 프로필·이력 등
 
 
 class EduOption(BaseModel):

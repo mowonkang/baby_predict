@@ -42,6 +42,10 @@ uvicorn app.main:app --reload
 | POST | `/api/grade-plan` | 나이/학년 → **이 학년에 할 것**(유치원~고3, 인문계) + 핵심 과목 |
 | POST | `/api/achievement` | 과목별 수준(잘함/보통/부족) → **보완 과목 + 학원·무료/저렴 교육 추천**(학교급별 자원·실제 링크) |
 | POST | `/api/lifecycle` | 나이 → **전 생애주기 타임라인**(영아~대학·진로) + 현재 위치 |
+| POST | `/api/units` | 나이/학년 → **이번 학년 단원 + 단원별 무료강의 링크**(칸아카데미 학년별 수학·EBS) |
+| POST | `/api/sync/save` · GET `/api/sync/{code}` | **동기화 코드** 서버 저장/조회(여러 기기, MVP) |
+
+> 응답에 `source`/`updated`(출처·갱신일) 포함. 영아(0~2)는 월령(나이)별 발달 가이드.
 | GET | `/api/grades` | 학년 목록(유치원~고3) |
 | POST | `/api/guide` | 나이 → 이 시기 공부할 것·준비할 것(학교급 단위) |
 | GET | `/api/activities` | 쉬운 진단용 — 관심활동·학습성향 선택 옵션 |

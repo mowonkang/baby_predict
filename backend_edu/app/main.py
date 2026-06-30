@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -35,7 +35,11 @@ from .models import (
     RecommendationResponse,
     StudentProfile,
     SubjectsResponse,
+    SyncSave,
+    UnitsResponse,
 )
+from .store import load_profile, save_profile
+from .units import build_units
 from .pathway import build_pathway
 from .recommender import recommend
 from .subjects import recommend_subjects
@@ -102,6 +106,31 @@ def post_achievement(profile: StudentProfile) -> AchievementResponse:
 def post_lifecycle(profile: StudentProfile) -> LifecycleResponse:
     """전 생애주기 타임라인(영아~대학·진로) + 현재 위치."""
     return build_lifecycle(profile.age_years)
+
+
+@app.post("/api/units", response_model=UnitsResponse)
+def post_units(profile: StudentProfile) -> UnitsResponse:
+    """이번 학년 단원 + 단원별 무료강의 링크(칸아카데미·EBS)."""
+    return build_units(profile.age_years)
+
+
+@app.post("/api/sync/save")
+def post_sync_save(body: SyncSave) -> dict:
+    """동기화 코드로 프로필·이력을 서버에 저장(여러 기기 공유)."""
+    try:
+        save_profile(body.code, body.payload)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="동기화 코드를 입력하세요.")
+    return {"ok": True}
+
+
+@app.get("/api/sync/{code}")
+def get_sync(code: str) -> dict:
+    """동기화 코드로 저장된 프로필·이력 조회."""
+    data = load_profile(code)
+    if data is None:
+        raise HTTPException(status_code=404, detail="해당 코드로 저장된 데이터가 없습니다.")
+    return {"payload": data}
 
 
 @app.post("/api/recommend", response_model=RecommendationResponse)
