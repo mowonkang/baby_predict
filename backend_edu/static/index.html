@@ -83,7 +83,7 @@
 <div class="app">
   <header>
     <div class="brand">🎓 EduPath</div>
-    <div class="sub">학년별 '이 학년에 할 일' + 과목 보완(무료·저렴 포함) 추천</div>
+    <div class="sub">전 생애주기(0세~진로) · 이 시기 할 일 + 과목 보완(무료·저렴) + 성취 추적</div>
     <div class="steps"><i id="s0" class="on"></i><i id="s1"></i><i id="s2"></i><i id="s3"></i></div>
   </header>
   <main>
@@ -93,9 +93,11 @@
         <h2>우리 아이는 지금 몇 살인가요?</h2>
         <div class="age-grid" id="ageGrid"></div>
         <input id="ageInput" type="number" min="3" max="25" placeholder="직접 입력 (만 나이)" style="margin-top:10px" />
+        <label for="childName">아이 이름/별명 (이력 저장용, 선택)</label>
+        <input id="childName" type="text" maxlength="20" placeholder="예: 우리아이 (성취도 변화를 기록해요)" />
         <label for="budget">월 교육비 예산 (선택)</label>
         <input id="budget" type="number" min="0" placeholder="예: 300000 (비우면 제한 없음)" />
-        <p class="hint">입력 정보는 이 브라우저 안에서만 쓰입니다(서버 저장 없음).</p>
+        <p class="hint">입력 정보는 이 브라우저 안에만 저장됩니다(서버 전송 없음).</p>
       </div>
       <div class="cta"><button class="btn" id="toPlan" disabled>이 학년에 할 일 보기 →</button></div>
     </section>
@@ -139,11 +141,11 @@
 </div>
 
 <script>
-const state={ age:null, coreSubjects:[], achievements:{}, picks:new Set() };
+const state={ age:null, name:'', coreSubjects:[], achievements:{}, picks:new Set() };
 const $=s=>document.querySelector(s);
 const TYPE_LABEL={ national_pick:'인기', aptitude_match:'적성맞춤', stage_core:'단계핵심' };
 const RIASEC={ realistic:'현실형 R', investigative:'탐구형 I', artistic:'예술형 A', social:'사회형 S', enterprising:'진취형 E', conventional:'관습형 C' };
-const AGES=[ {v:5,t:'유치원',s:'4~6세'},{v:8,t:'초등 저',s:'1~2학년'},{v:10,t:'초등 중',s:'3~4학년'},
+const AGES=[ {v:1,t:'영아',s:'0~2세'},{v:5,t:'유치원',s:'4~6세'},{v:8,t:'초등 저',s:'1~2학년'},{v:10,t:'초등 중',s:'3~4학년'},
   {v:12,t:'초등 고',s:'5~6학년'},{v:14,t:'중학생',s:'중1~3'},{v:17,t:'고등학생',s:'고1~3'} ];
 const LVLS=[['good','잘함'],['ok','보통'],['weak','부족']];
 
@@ -224,11 +226,41 @@ function mindmap(pw){
   return s+`</svg>`;
 }
 
+// 성취도 이력 (브라우저 localStorage)
+const childKey=()=>'edupath_hist_'+(state.name||'우리아이');
+function loadHistory(){ try{ return JSON.parse(localStorage.getItem(childKey())||'[]'); }catch(e){ return []; } }
+function saveHistory(grade){
+  if(!Object.keys(state.achievements).length) return;  // 성취도 입력 없으면 저장 안 함
+  const hist=loadHistory();
+  const date=new Date().toISOString().slice(0,10);
+  hist.push({ date, age:state.age, grade, ach:{...state.achievements} });
+  try{ localStorage.setItem(childKey(), JSON.stringify(hist.slice(-20))); }catch(e){}
+}
+const lvlNum=l=>({부족:0,보통:1,잘함:2}[l] ?? -1);
+function historyHTML(){
+  const h=loadHistory(); if(!h.length) return '';
+  const recent=h.slice(-6).reverse();
+  let s=`<div class="card"><h3>📈 성취도 이력 — ${esc(state.name||'우리아이')}</h3>`;
+  recent.forEach((e,i)=>{
+    const prev=recent[i+1];
+    s+=`<div style="margin:7px 0"><b>${e.date}</b> <span class="muted">· ${e.grade}</span><div class="chips" style="margin-top:3px">`;
+    Object.entries(e.ach).forEach(([sub,lv])=>{
+      let arrow=''; if(prev&&prev.ach[sub]!=null){ const d=lvlNum(lv)-lvlNum(prev.ach[sub]); arrow=d>0?' ↑':d<0?' ↓':''; }
+      s+=`<span class="chip">${esc(sub)}: ${esc(lv)}${arrow}</span>`;
+    });
+    s+=`</div></div>`;
+  });
+  return s+`<div class="muted">결과를 볼 때마다 자동 저장돼요. 이 브라우저에만 보관(서버 전송 없음).</div></div>`;
+}
+const optLink=o=>o.url?`<a href="${esc(o.url)}" target="_blank" rel="noopener">${esc(o.name)}</a>`:esc(o.name);
+
 // 결과
 async function showResult(){
+  state.name=($('#childName').value||'').trim();
   const [plan,achv,rec,path,subj,ai,careers]=await Promise.all([
     post('/api/grade-plan'),post('/api/achievement'),post('/api/recommend'),
     post('/api/pathway'),post('/api/subjects'),post('/api/ai-track'),post('/api/careers')]);
+  saveHistory(plan.grade);
   render(plan,achv,ai,careers,rec,path,subj); setStep(3);
 }
 function render(plan,achv,ai,careers,rec,path,subj){
@@ -236,16 +268,18 @@ function render(plan,achv,ai,careers,rec,path,subj){
   let h='';
   // 1) 학년별 할 일 (주 기능)
   h+=`<div class="card">${planHTML(plan)}</div>`;
-  // 2) 과목 보완 추천
+  // 1.5) 성취도 이력 (있으면)
+  h+=historyHTML();
+  // 2) 과목 보완 추천 (무료·저렴 링크)
   h+=`<div class="card"><h3>📌 과목 보완 추천</h3><div class="muted">${achv.note}</div>`;
   if(achv.weak.length){
     achv.weak.forEach(w=>{
       h+=`<div class="rec"><div class="top"><span class="nm">${w.subject}</span><span class="lvlbadge ${w.level}">${w.level}</span></div>
         <div class="muted" style="margin:4px 0">${w.action}</div>
         <div style="margin-top:4px"><b style="font-size:12.5px;color:var(--free)">무료·저렴</b>
-          ${w.free.map(o=>`<div class="opt-line">• ${o.name} <span class="free-cost">${o.cost}</span> <span class="muted">${o.note}</span></div>`).join('')}</div>
+          ${w.free.map(o=>`<div class="opt-line">• ${optLink(o)} <span class="free-cost">${o.cost}</span> <span class="muted">${esc(o.note)}</span></div>`).join('')}</div>
         <div style="margin-top:4px"><b style="font-size:12.5px;color:var(--muted)">학원·인강</b>
-          ${w.paid.map(o=>`<div class="opt-line">• ${o.name} <span class="paid-cost">${o.cost}</span></div>`).join('')}</div>
+          ${w.paid.map(o=>`<div class="opt-line">• ${optLink(o)} <span class="paid-cost">${o.cost}</span></div>`).join('')}</div>
       </div>`;
     });
   }

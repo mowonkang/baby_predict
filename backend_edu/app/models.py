@@ -67,7 +67,7 @@ class SurveyAnswer(BaseModel):
 class StudentProfile(BaseModel):
     """추천·path 엔진 입력 프로필."""
 
-    age_years: int = Field(..., ge=3, le=25, description="만 나이")
+    age_years: int = Field(..., ge=0, le=25, description="만 나이(0세 영아부터)")
     grade: Optional[str] = Field(None, description="학년 키(e3, m1 등). 없으면 나이로 추론")
     region: Optional[str] = Field(None, description="거주 지역")
     budget_max: Optional[int] = Field(
@@ -188,6 +188,7 @@ class EduOption(BaseModel):
     provider: str
     cost: str   # "무료" / "저렴" / "유료 약 N원" 등
     note: str
+    url: str = ""  # 실제 링크(있으면)
 
 
 class SubjectPlan(BaseModel):

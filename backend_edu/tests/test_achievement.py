@@ -37,3 +37,13 @@ def test_all_good_note():
     res = build_achievement(14, {"수학": "잘함", "영어": "잘함"})
     assert not res.weak
     assert "강점" in res.note
+
+
+def test_free_options_have_links():
+    res = build_achievement(14, {"수학": "부족"})
+    assert any(o.url.startswith("http") for o in res.weak[0].free)
+
+
+def test_infant_uses_childcare_resource():
+    res = build_achievement(1, {"애착·정서": "부족"})
+    assert any("아이사랑" in o.name for o in res.weak[0].free)

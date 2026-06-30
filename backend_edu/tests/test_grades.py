@@ -3,6 +3,7 @@ from app.grades import build_grade_plan, core_subjects, grade_for_age
 
 
 def test_grade_for_age():
+    assert grade_for_age(1).key == "i"   # 영아(0~2)
     assert grade_for_age(5).key == "k"
     assert grade_for_age(7).key == "e1"
     assert grade_for_age(9).key == "e3"
