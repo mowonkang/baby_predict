@@ -25,6 +25,7 @@ from .curriculum import get_stage
 from .grades import GRADES, build_grade_plan
 from .guide import build_guide
 from .lifecycle import build_lifecycle
+from .planner import build_plan
 from .models import (
     AchievementResponse,
     AiTrackResponse,
@@ -38,6 +39,7 @@ from .models import (
     ReviewsResponse,
     ReviewSubmit,
     StudentProfile,
+    StudyPlanResponse,
     SubjectsResponse,
     SyncSave,
     UnitsResponse,
@@ -116,6 +118,12 @@ def post_lifecycle(profile: StudentProfile) -> LifecycleResponse:
 def post_units(profile: StudentProfile) -> UnitsResponse:
     """이번 학년 단원 + 단원별 무료강의 링크(칸아카데미·EBS)."""
     return build_units(profile.age_years)
+
+
+@app.post("/api/plan", response_model=StudyPlanResponse)
+def post_plan(profile: StudentProfile) -> StudyPlanResponse:
+    """적응형 주간 학습 계획(규칙 기반, 추가 과금 없음) — 시간배분·할일·목표·무료자료·복습."""
+    return build_plan(profile)
 
 
 @app.post("/api/academies", response_model=AcademiesResponse)

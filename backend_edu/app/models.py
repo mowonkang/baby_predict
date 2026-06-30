@@ -79,6 +79,8 @@ class StudentProfile(BaseModel):
     aptitude: Optional[AptitudeProfile] = None
     # 과목별 현재 수준(잘함/보통/부족) — 보완 추천용
     achievements: dict[str, str] = Field(default_factory=dict)
+    # 주당 학습 가능 시간(시간). 없으면 학교급 기본값 사용
+    weekly_hours: Optional[int] = Field(None, ge=0, le=80)
 
 
 class RecommendationType(str, Enum):
@@ -249,6 +251,28 @@ class ReviewSubmit(BaseModel):
     text: str = Field(..., min_length=1, max_length=500)
     target_type: str = "학원"   # 학원/선생님/강의
     target_name: str = ""
+
+
+class StudySession(BaseModel):
+    subject: str
+    level: str          # 부족/보통/잘함/기본
+    weekly_hours: float
+    focus: str          # 이번 주 할 일
+    goal: str           # 미니 목표
+    resource: EduOption # 무료/저렴 우선 자료
+
+
+class StudyPlanResponse(BaseModel):
+    """적응형 주간 학습 계획 (규칙 기반, LLM 호출 없음)."""
+
+    grade: str
+    mode: str                 # academic / developmental
+    total_weekly_hours: float
+    sessions: list[StudySession]
+    review: list[str]         # 복습(망각 방지) 항목
+    tips: list[str]
+    source: str = "2022 개정 교육과정 기반 규칙 엔진"
+    updated: str = "2026-06"
 
 
 class EduOption(BaseModel):

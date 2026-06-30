@@ -147,6 +147,8 @@
         <h2>과목별 현재 수준</h2>
         <p class="hint">시험 점수가 없어도 느낌으로 OK. 부족한 과목엔 무료·저렴 교육을 추천해 드려요.</p>
         <div id="achv"></div>
+        <label for="weeklyHours" style="margin-top:12px">주당 학습 가능 시간 (선택)</label>
+        <input id="weeklyHours" type="number" min="0" max="60" placeholder="예: 8 (비우면 학년 기본값으로 배분)" />
       </div>
       <div class="card">
         <h3>좋아하는 활동 (선택)</h3>
@@ -188,6 +190,7 @@ function payload(){
   const p={ age_years:state.age, interests:[...state.picks], achievements:state.achievements };
   if(b) p.budget_max=b;
   const rg=($('#region').value||'').trim(); if(rg) p.region=rg;
+  const wh=parseInt($('#weeklyHours').value,10); if(!isNaN(wh)) p.weekly_hours=wh;
   return p;
 }
 const post=(url)=>fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload())}).then(r=>r.json());
@@ -401,23 +404,58 @@ async function submitReview(id){
   }catch(e){ alert('등록 실패'); }
 }
 
+// 적응형 학습계획 렌더 + 이력 대비 적응 메모
+function adaptNote(){
+  const h=loadHistory(); if(h.length<2) return '';
+  const cur=h[h.length-1].ach||{}, prev=h[h.length-2].ach||{};
+  const ups=[],downs=[];
+  Object.keys(cur).forEach(s=>{ if(prev[s]!=null){ const d=lvlNum(cur[s])-lvlNum(prev[s]); if(d>0)ups.push(s); else if(d<0)downs.push(s); } });
+  if(!ups.length && !downs.length) return '';
+  let t='📈 지난 기록 대비 — ';
+  if(ups.length) t+=`${ups.join(', ')} 향상↑(다음 단계로) `;
+  if(downs.length) t+=`${downs.join(', ')} 하락↓(기초 점검) `;
+  return `<div class="mode" style="background:#00b894">${esc(t)}</div>`;
+}
+function planHTML2(pl){
+  let h=`<div class="card"><h3>📅 맞춤 학습 계획 <span class="muted">(주간·적응형)</span></h3>`;
+  if(pl.mode==='developmental'){
+    h+=`<div class="muted">이 시기는 시간표보다 매일의 놀이·대화·책읽기가 핵심이에요.</div>`;
+    pl.sessions.forEach(s=>{ h+=`<div class="rec"><div class="nm">${esc(s.subject)}</div>
+      <div class="muted">${mdb(s.focus)} · 🎯 ${esc(s.goal)}</div>
+      <div class="opt-line">자료: ${optLink(s.resource)}</div></div>`; });
+  } else {
+    h+=`<div class="gradeTag">주당 약 ${pl.total_weekly_hours}시간 (약점에 더 배분)</div>`;
+    h+=adaptNote();
+    pl.sessions.forEach(s=>{ h+=`<div class="rec"><div class="top"><span class="nm">${esc(s.subject)}</span>
+      <span class="tag">${esc(s.level)} · ${s.weekly_hours}h/주</span></div>
+      <div class="muted">${mdb(s.focus)}</div>
+      <div class="muted">🎯 ${esc(s.goal)}</div>
+      <div class="opt-line">자료: ${optLink(s.resource)} <span class="free-cost">${esc(s.resource.cost)}</span></div></div>`; });
+  }
+  if(pl.review && pl.review.length) h+=`<div class="tip">🔁 ${pl.review.map(esc).join(' · ')}</div>`;
+  h+=`<ul class="reasons">${pl.tips.map(t=>`<li>${mdb(t)}</li>`).join('')}</ul>`;
+  return h+`<div class="src">출처: <b>${esc(pl.source)}</b> · 갱신 ${esc(pl.updated)} · (LLM 호출 없는 규칙 엔진)</div></div>`;
+}
+
 // 결과
 async function showResult(){
   state.name=($('#childName').value||'').trim();
-  const [plan,units,achv,rec,path,subj,ai,careers,life,aca]=await Promise.all([
-    post('/api/grade-plan'),post('/api/units'),post('/api/achievement'),post('/api/recommend'),
+  const [plan,units,splan,achv,rec,path,subj,ai,careers,life,aca]=await Promise.all([
+    post('/api/grade-plan'),post('/api/units'),post('/api/plan'),post('/api/achievement'),post('/api/recommend'),
     post('/api/pathway'),post('/api/subjects'),post('/api/ai-track'),post('/api/careers'),
     post('/api/lifecycle'),post('/api/academies')]);
   saveHistory(plan.grade); saveProfile(plan.grade); saveSync();
-  render(life,plan,units,achv,aca,ai,careers,rec,path,subj); setStep(3);
+  render(life,plan,units,splan,achv,aca,ai,careers,rec,path,subj); setStep(3);
 }
-function render(life,plan,units,achv,aca,ai,careers,rec,path,subj){
+function render(life,plan,units,splan,achv,aca,ai,careers,rec,path,subj){
   const I=rec.aptitude.interest, pw=path.pathway, topI=Object.entries(I).sort((a,b)=>b[1]-a[1]).slice(0,3);
   let h='';
   // 0) 생애주기 타임라인
   h+=lifecycleHTML(life);
   // 1) 학년별 할 일 (주 기능)
   h+=`<div class="card">${planHTML(plan)}</div>`;
+  // 1.1) 적응형 주간 학습계획
+  h+=planHTML2(splan);
   // 1.2) 단원 + 무료강의 링크
   h+=unitsHTML(units);
   // 1.5) 성취도 이력 (있으면)
