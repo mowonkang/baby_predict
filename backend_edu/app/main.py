@@ -16,6 +16,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
+from .academies import get_reviews, recommend_academies, submit_review
 from .achievement import build_achievement
 from .ai_track import build_ai_track
 from .aptitude import ACTIVITY_OPTIONS, QUESTIONS, STYLE_OPTIONS, resolve_aptitude
@@ -33,6 +34,9 @@ from .models import (
     LifecycleResponse,
     PathwayResponse,
     RecommendationResponse,
+    AcademiesResponse,
+    ReviewsResponse,
+    ReviewSubmit,
     StudentProfile,
     SubjectsResponse,
     SyncSave,
@@ -112,6 +116,32 @@ def post_lifecycle(profile: StudentProfile) -> LifecycleResponse:
 def post_units(profile: StudentProfile) -> UnitsResponse:
     """이번 학년 단원 + 단원별 무료강의 링크(칸아카데미·EBS)."""
     return build_units(profile.age_years)
+
+
+@app.post("/api/academies", response_model=AcademiesResponse)
+def post_academies(profile: StudentProfile) -> AcademiesResponse:
+    """지역·약점 과목·학년 기반 학원 추천(입점=광고 별도 표기)."""
+    weak = [s for s, lv in profile.achievements.items()
+            if str(lv).strip() in ("부족", "하", "weak", "보통", "중", "ok")]
+    return recommend_academies(profile.age_years, profile.region, weak, profile.budget_max)
+
+
+@app.get("/api/academies/{academy_id}/reviews", response_model=ReviewsResponse)
+def get_academy_reviews(academy_id: str) -> ReviewsResponse:
+    """학원 평점·리뷰(학원/선생님/강의) 조회."""
+    res = get_reviews(academy_id)
+    if res is None:
+        raise HTTPException(status_code=404, detail="학원을 찾을 수 없습니다.")
+    return res
+
+
+@app.post("/api/reviews")
+def post_review(body: ReviewSubmit) -> dict:
+    """리뷰 작성(서버 저장). 선생님·강의 평 포함."""
+    ok = submit_review(body.academy_id, body.rating, body.text, body.target_type, body.target_name)
+    if not ok:
+        raise HTTPException(status_code=404, detail="학원을 찾을 수 없습니다.")
+    return {"ok": True}
 
 
 @app.post("/api/sync/save")

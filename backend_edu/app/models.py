@@ -205,6 +205,52 @@ class SyncSave(BaseModel):
     payload: dict      # 프로필·이력 등
 
 
+class AcademyPick(BaseModel):
+    id: str
+    name: str
+    type: str          # 학원 / 인강 / 공부방
+    subjects: list[str]
+    region: str        # 지역(온라인 포함)
+    price: int         # 월 비용(원), 0=무료/문의
+    rating: float      # 평점(0~5)
+    review_count: int
+    sponsored: bool    # 입점(스폰서) 여부
+    reasons: list[str]
+    url: str = ""
+
+
+class AcademiesResponse(BaseModel):
+    region: str
+    weak_subjects: list[str]
+    note: str
+    sponsored: list[AcademyPick]  # 입점(광고) — 별도 표기
+    organic: list[AcademyPick]    # 일반 추천(평점·매칭 순)
+
+
+class Review(BaseModel):
+    target_type: str   # 학원 / 선생님 / 강의
+    target_name: str
+    rating: int        # 1~5
+    text: str
+    date: str = ""
+
+
+class ReviewsResponse(BaseModel):
+    academy_id: str
+    academy_name: str
+    avg_rating: float
+    count: int
+    reviews: list[Review]
+
+
+class ReviewSubmit(BaseModel):
+    academy_id: str
+    rating: int = Field(..., ge=1, le=5)
+    text: str = Field(..., min_length=1, max_length=500)
+    target_type: str = "학원"   # 학원/선생님/강의
+    target_name: str = ""
+
+
 class EduOption(BaseModel):
     name: str
     provider: str

@@ -147,6 +147,25 @@ def test_lifecycle_endpoint():
     assert any(s["current"] for s in body["stages"])
 
 
+def test_academies_endpoint():
+    res = client.post("/api/academies", json={
+        "age_years": 12, "region": "서울 강남", "achievements": {"수학": "부족"}})
+    assert res.status_code == 200
+    body = res.json()
+    assert "sponsored" in body and "organic" in body
+    picks = body["sponsored"] + body["organic"]
+    assert picks and all("rating" in p for p in picks)
+
+
+def test_review_submit_and_read():
+    s = client.post("/api/reviews", json={"academy_id": "A003", "rating": 4,
+                                          "text": "API 테스트 리뷰", "target_type": "선생님", "target_name": "쌤"})
+    assert s.status_code == 200
+    r = client.get("/api/academies/A003/reviews")
+    assert r.status_code == 200
+    assert any("API 테스트" in rv["text"] for rv in r.json()["reviews"])
+
+
 def test_recommend_validation_error():
     # 만 나이 범위 초과 → 422
     res = client.post("/api/recommend", json={"age_years": 999})

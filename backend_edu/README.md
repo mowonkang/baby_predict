@@ -43,6 +43,8 @@ uvicorn app.main:app --reload
 | POST | `/api/achievement` | 과목별 수준(잘함/보통/부족) → **보완 과목 + 학원·무료/저렴 교육 추천**(학교급별 자원·실제 링크) |
 | POST | `/api/lifecycle` | 나이 → **전 생애주기 타임라인**(영아~대학·진로) + 현재 위치 |
 | POST | `/api/units` | 나이/학년 → **이번 학년 단원 + 단원별 무료강의 링크**(칸아카데미 학년별 수학·EBS) |
+| POST | `/api/academies` | 지역·약점 과목·학년 → **학원 추천**(입점/광고 별도 표기, 평점·예시데이터) |
+| GET `/api/academies/{id}/reviews` · POST `/api/reviews` | 학원 **평점·리뷰**(선생님·강의 평) 조회/작성(서버 저장) |
 | POST | `/api/sync/save` · GET `/api/sync/{code}` | **동기화 코드** 서버 저장/조회(여러 기기, MVP) |
 
 > 응답에 `source`/`updated`(출처·갱신일) 포함. 영아(0~2)는 월령(나이)별 발달 가이드.
