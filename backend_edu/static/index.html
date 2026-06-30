@@ -169,6 +169,7 @@ function payload(){
 }
 const post=(url)=>fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload())}).then(r=>r.json());
 const esc=t=>String(t).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+const mdb=t=>esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');  // **굵게**
 const short=(t,n)=>{ t=String(t); return t.length>n?t.slice(0,n-1)+'…':t; };
 
 // 0
@@ -186,7 +187,7 @@ $('#ageInput').addEventListener('input',e=>{ const v=parseInt(e.target.value,10)
 function planHTML(gp){
   return `<div class="gradeTag">${gp.grade} · ${gp.level}</div>
     <h3 style="margin-top:10px">📒 이 학년에 이렇게 하세요</h3>
-    <ul class="glist">${gp.todo.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+    <ul class="glist">${gp.todo.map(x=>`<li>${mdb(x)}</li>`).join('')}</ul>
     <div class="tip">💡 ${esc(gp.tip)}</div>`;
 }
 async function loadPlan(){

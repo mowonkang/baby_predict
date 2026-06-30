@@ -34,3 +34,12 @@ def test_high_grade_plan_mentions_naesin_or_suneung():
     gp = build_grade_plan(16)  # 고1
     text = " ".join(gp.todo)
     assert "내신" in text or "수능" in text
+
+
+def test_grade_plan_curriculum_accurate():
+    # 2022 개정 교육과정 기반: 초2 곱셈구구, 초3 나눗셈·분수 도입
+    assert "곱셈구구" in " ".join(build_grade_plan(8).todo)
+    e3 = " ".join(build_grade_plan(9).todo)
+    assert ("분수" in e3 or "나눗셈" in e3) and "영어" in e3
+    # 중3 이차방정식/이차함수
+    assert "이차" in " ".join(build_grade_plan(15).todo)
