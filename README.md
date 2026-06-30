@@ -59,6 +59,7 @@ pytest -q                       # 테스트 17건
 | [docs/edu/교육현황_리서치.md](docs/edu/교육현황_리서치.md) | 한국 교육 현황 리서치(공식 출처) |
 | [docs/edu/무료저가자원.md](docs/edu/무료저가자원.md) | 무료·저가 교육 자원 실제 링크 |
 | [docs/edu/벤치마킹.md](docs/edu/벤치마킹.md) | 경쟁 플랫폼 벤치마킹 + 진화 로드맵 |
+| [docs/edu/성장성_및_예측모델.md](docs/edu/성장성_및_예측모델.md) | SWOT·성장성 + 페르소나 기반 예측모델(BKT/IRT, 무과금) 설계 |
 | [docs/edu/데이터소스.md](docs/edu/데이터소스.md) | 교육 외부 데이터 소스 |
 
 ### MVP (코드 + 앱)
