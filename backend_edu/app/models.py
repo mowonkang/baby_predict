@@ -204,3 +204,16 @@ class AchievementResponse(BaseModel):
     note: str
     weak: list[SubjectPlan]  # 보완 필요 과목
     strong: list[str]        # 양호 과목
+
+
+class LifecycleStage(BaseModel):
+    label: str
+    age_label: str
+    headline: str
+    focus: list[str]
+    current: bool
+
+
+class LifecycleResponse(BaseModel):
+    current_label: str
+    stages: list[LifecycleStage]

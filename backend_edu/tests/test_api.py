@@ -139,6 +139,14 @@ def test_grades_list():
     assert len(res.json()["grades"]) >= 12
 
 
+def test_lifecycle_endpoint():
+    res = client.post("/api/lifecycle", json={"age_years": 14})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["current_label"] == "중등"
+    assert any(s["current"] for s in body["stages"])
+
+
 def test_recommend_validation_error():
     # 만 나이 범위 초과 → 422
     res = client.post("/api/recommend", json={"age_years": 999})

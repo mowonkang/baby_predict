@@ -47,3 +47,14 @@ def test_free_options_have_links():
 def test_infant_uses_childcare_resource():
     res = build_achievement(1, {"애착·정서": "부족"})
     assert any("아이사랑" in o.name for o in res.weak[0].free)
+
+
+def test_free_resources_vary_by_school_level():
+    """같은 수학이라도 초등 vs 고등 무료자원이 달라야 한다."""
+    elem = build_achievement(9, {"수학": "부족"}).weak[0].free   # 초3
+    high = build_achievement(17, {"수학": "부족"}).weak[0].free  # 고2
+    elem_names = {o.name for o in elem}
+    high_names = {o.name for o in high}
+    assert "똑똑! 수학탐험대" in elem_names    # 초등 전용
+    assert "EBSi 고교" in high_names          # 고등 전용
+    assert elem_names != high_names

@@ -40,7 +40,8 @@ uvicorn app.main:app --reload
 |--------|------|------|
 | GET | `/health` | 헬스체크 |
 | POST | `/api/grade-plan` | 나이/학년 → **이 학년에 할 것**(유치원~고3, 인문계) + 핵심 과목 |
-| POST | `/api/achievement` | 과목별 수준(잘함/보통/부족) → **보완 과목 + 학원·무료/저렴 교육 추천** |
+| POST | `/api/achievement` | 과목별 수준(잘함/보통/부족) → **보완 과목 + 학원·무료/저렴 교육 추천**(학교급별 자원·실제 링크) |
+| POST | `/api/lifecycle` | 나이 → **전 생애주기 타임라인**(영아~대학·진로) + 현재 위치 |
 | GET | `/api/grades` | 학년 목록(유치원~고3) |
 | POST | `/api/guide` | 나이 → 이 시기 공부할 것·준비할 것(학교급 단위) |
 | GET | `/api/activities` | 쉬운 진단용 — 관심활동·학습성향 선택 옵션 |

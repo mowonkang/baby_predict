@@ -23,12 +23,14 @@ from .careers import recommend_careers
 from .curriculum import get_stage
 from .grades import GRADES, build_grade_plan
 from .guide import build_guide
+from .lifecycle import build_lifecycle
 from .models import (
     AchievementResponse,
     AiTrackResponse,
     CareersResponse,
     GradePlanResponse,
     GuideResponse,
+    LifecycleResponse,
     PathwayResponse,
     RecommendationResponse,
     StudentProfile,
@@ -94,6 +96,12 @@ def post_grade_plan(profile: StudentProfile) -> GradePlanResponse:
 def post_achievement(profile: StudentProfile) -> AchievementResponse:
     """과목별 성취수준(잘함/보통/부족) → 보완 과목 + 학원·무료/저렴 교육 추천."""
     return build_achievement(profile.age_years, profile.achievements)
+
+
+@app.post("/api/lifecycle", response_model=LifecycleResponse)
+def post_lifecycle(profile: StudentProfile) -> LifecycleResponse:
+    """전 생애주기 타임라인(영아~대학·진로) + 현재 위치."""
+    return build_lifecycle(profile.age_years)
 
 
 @app.post("/api/recommend", response_model=RecommendationResponse)
