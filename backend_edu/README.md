@@ -39,7 +39,10 @@ uvicorn app.main:app --reload
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | GET | `/health` | 헬스체크 |
-| POST | `/api/guide` | 나이 → **이 시기 공부할 것·준비할 것**(일반계 기준, 진단 불필요) |
+| POST | `/api/grade-plan` | 나이/학년 → **이 학년에 할 것**(유치원~고3, 인문계) + 핵심 과목 |
+| POST | `/api/achievement` | 과목별 수준(잘함/보통/부족) → **보완 과목 + 학원·무료/저렴 교육 추천** |
+| GET | `/api/grades` | 학년 목록(유치원~고3) |
+| POST | `/api/guide` | 나이 → 이 시기 공부할 것·준비할 것(학교급 단위) |
 | GET | `/api/activities` | 쉬운 진단용 — 관심활동·학습성향 선택 옵션 |
 | GET | `/api/survey` | (레거시) 리커트 적성 설문 |
 | POST | `/api/recommend` | 프로필 → 커리큘럼 추천 |

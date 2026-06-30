@@ -114,6 +114,31 @@ def test_careers_endpoint():
     assert c["name"] and c["prepare_now"] and c["key_subjects"] and c["outlook"]
 
 
+def test_grade_plan_endpoint():
+    res = client.post("/api/grade-plan", json={"age_years": 9})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["grade"] == "초3"
+    assert body["todo"] and body["subjects"]
+
+
+def test_achievement_endpoint():
+    res = client.post("/api/achievement", json={
+        "age_years": 14, "achievements": {"수학": "부족", "국어": "잘함"}})
+    assert res.status_code == 200
+    body = res.json()
+    assert any(w["subject"] == "수학" for w in body["weak"])
+    assert "국어" in body["strong"]
+    math = next(w for w in body["weak"] if w["subject"] == "수학")
+    assert math["free"] and math["paid"]
+
+
+def test_grades_list():
+    res = client.get("/api/grades")
+    assert res.status_code == 200
+    assert len(res.json()["grades"]) >= 12
+
+
 def test_recommend_validation_error():
     # 만 나이 범위 초과 → 422
     res = client.post("/api/recommend", json={"age_years": 999})

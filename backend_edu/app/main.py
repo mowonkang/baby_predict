@@ -16,14 +16,18 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
+from .achievement import build_achievement
 from .ai_track import build_ai_track
 from .aptitude import ACTIVITY_OPTIONS, QUESTIONS, STYLE_OPTIONS, resolve_aptitude
 from .careers import recommend_careers
 from .curriculum import get_stage
+from .grades import GRADES, build_grade_plan
 from .guide import build_guide
 from .models import (
+    AchievementResponse,
     AiTrackResponse,
     CareersResponse,
+    GradePlanResponse,
     GuideResponse,
     PathwayResponse,
     RecommendationResponse,
@@ -72,6 +76,24 @@ def get_activities() -> dict:
 def post_guide(profile: StudentProfile) -> GuideResponse:
     """이 시기에 무엇을 공부하고 무엇을 준비할지 (일반계 기준, 진단 불필요)."""
     return build_guide(profile.age_years)
+
+
+@app.get("/api/grades")
+def get_grades() -> dict:
+    """학년 목록 (유치원~고3)."""
+    return {"grades": [{"key": g.key, "label": g.label} for g in GRADES]}
+
+
+@app.post("/api/grade-plan", response_model=GradePlanResponse)
+def post_grade_plan(profile: StudentProfile) -> GradePlanResponse:
+    """이 학년에 할 것 + 핵심 과목 (유치원~고3, 인문계 기준)."""
+    return build_grade_plan(profile.age_years, profile.grade)
+
+
+@app.post("/api/achievement", response_model=AchievementResponse)
+def post_achievement(profile: StudentProfile) -> AchievementResponse:
+    """과목별 성취수준(잘함/보통/부족) → 보완 과목 + 학원·무료/저렴 교육 추천."""
+    return build_achievement(profile.age_years, profile.achievements)
 
 
 @app.post("/api/recommend", response_model=RecommendationResponse)

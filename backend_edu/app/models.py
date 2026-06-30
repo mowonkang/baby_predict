@@ -68,6 +68,7 @@ class StudentProfile(BaseModel):
     """추천·path 엔진 입력 프로필."""
 
     age_years: int = Field(..., ge=3, le=25, description="만 나이")
+    grade: Optional[str] = Field(None, description="학년 키(e3, m1 등). 없으면 나이로 추론")
     region: Optional[str] = Field(None, description="거주 지역")
     budget_max: Optional[int] = Field(
         None, ge=0, description="리소스당 최대 예산(원). None이면 제한 없음"
@@ -76,6 +77,8 @@ class StudentProfile(BaseModel):
     interests: list[str] = Field(default_factory=list, description="선택한 관심활동·학습성향 옵션 id")
     survey: list[SurveyAnswer] = Field(default_factory=list)
     aptitude: Optional[AptitudeProfile] = None
+    # 과목별 현재 수준(잘함/보통/부족) — 보완 추천용
+    achievements: dict[str, str] = Field(default_factory=dict)
 
 
 class RecommendationType(str, Enum):
@@ -168,3 +171,35 @@ class CareerPick(BaseModel):
 class CareersResponse(BaseModel):
     note: str
     careers: list[CareerPick]
+
+
+class GradePlanResponse(BaseModel):
+    """이 학년에 할 것 (유치원~고3, 인문계 기준)."""
+
+    grade: str
+    level: str
+    subjects: list[str]   # 핵심 과목(성취도 입력 대상)
+    todo: list[str]       # 이 학년에 할 것
+    tip: str
+
+
+class EduOption(BaseModel):
+    name: str
+    provider: str
+    cost: str   # "무료" / "저렴" / "유료 약 N원" 등
+    note: str
+
+
+class SubjectPlan(BaseModel):
+    subject: str
+    level: str    # 부족 / 보통
+    action: str
+    paid: list[EduOption]  # 학원/인강(유료)
+    free: list[EduOption]  # 무료/저렴 대안
+
+
+class AchievementResponse(BaseModel):
+    grade: str
+    note: str
+    weak: list[SubjectPlan]  # 보완 필요 과목
+    strong: list[str]        # 양호 과목

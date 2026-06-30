@@ -8,10 +8,10 @@
   <link rel="apple-touch-icon" href="/static/icon.svg" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="EduPath" />
-  <title>EduPath — 이 시기 공부·준비 + 교육 로드맵</title>
+  <title>EduPath — 학년별 할 일 + 과목 보완 추천</title>
   <style>
     :root{ --pri:#6c5ce7; --pri-d:#5a49d6; --bg:#f4f4fb; --card:#fff; --ink:#1f2230;
-      --muted:#7a7f9a; --ok:#00b894; --warn:#e17055; --line:#e7e7f3; --study:#0984e3; --prep:#00b894; }
+      --muted:#7a7f9a; --ok:#00b894; --warn:#e17055; --line:#e7e7f3; --study:#0984e3; --free:#00b894; }
     *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
     html,body{ margin:0; }
     body{ font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif; background:var(--bg); color:var(--ink); }
@@ -23,16 +23,15 @@
     .steps i{ height:4px; flex:1; background:rgba(255,255,255,.35); border-radius:2px; }
     .steps i.on{ background:#fff; }
     main{ padding:16px; }
-    .screen{ display:none; animation:fade .25s ease; }
-    .screen.active{ display:block; }
+    .screen{ display:none; animation:fade .25s ease; } .screen.active{ display:block; }
     @keyframes fade{ from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
     .card{ background:var(--card); border-radius:16px; padding:18px; margin:0 0 14px; box-shadow:0 2px 10px rgba(40,40,90,.06); }
-    h2{ font-size:18px; margin:2px 0 12px; }
-    h3{ font-size:15px; margin:0 0 8px; }
+    h2{ font-size:18px; margin:2px 0 12px; } h3{ font-size:15px; margin:0 0 8px; }
     label{ display:block; font-size:13.5px; font-weight:700; margin:12px 0 6px; }
     input{ width:100%; padding:13px; border:1.5px solid var(--line); border-radius:11px; font-size:16px; }
     input:focus{ outline:none; border-color:var(--pri); }
     .hint{ color:var(--muted); font-size:12px; margin-top:4px; }
+    .gradeTag{ display:inline-block; background:#f1eeff; color:var(--pri-d); font-weight:800; font-size:13px; padding:4px 12px; border-radius:11px; margin-top:8px; }
     .age-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:6px; }
     .age-grid button{ padding:12px 6px; border:1.5px solid var(--line); background:#fff; border-radius:11px; font-size:13px; cursor:pointer; line-height:1.3; }
     .age-grid button.sel{ border-color:var(--pri); background:#f1eeff; color:var(--pri-d); font-weight:700; }
@@ -41,19 +40,20 @@
     .btn:disabled{ opacity:.45; }
     .btn.ghost{ background:#fff; color:var(--pri); border:1.5px solid var(--pri); margin-top:9px; }
     .cta{ position:sticky; bottom:0; background:linear-gradient(180deg,rgba(244,244,251,0),var(--bg) 30%); padding:12px 0 16px; }
-    /* 가이드 */
-    .headline{ font-size:16px; font-weight:800; line-height:1.4; margin-bottom:4px; }
     .glist{ list-style:none; padding:0; margin:8px 0 0; }
-    .glist li{ padding:9px 12px; border-radius:10px; margin:6px 0; font-size:14px; display:flex; gap:8px; }
-    .glist.study li{ background:#eaf4fd; } .glist.prep li{ background:#e7f8f1; }
-    .gtag{ font-size:12px; font-weight:800; padding:2px 9px; border-radius:9px; color:#fff; }
-    .gtag.study{ background:var(--study); } .gtag.prep{ background:var(--prep); }
+    .glist li{ padding:9px 12px; border-radius:10px; margin:6px 0; font-size:14px; background:#eef2fb; }
     .tip{ background:#fff7ed; border:1px solid #fde2c8; color:#9a5b1e; border-radius:11px; padding:11px 13px; font-size:13px; margin-top:10px; }
-    /* 관심사 선택 */
     .opts{ display:flex; flex-wrap:wrap; gap:8px; }
     .opt{ padding:11px 13px; border:1.5px solid var(--line); background:#fff; border-radius:12px; font-size:13.5px; cursor:pointer; }
     .opt.sel{ border-color:var(--pri); background:#f1eeff; color:var(--pri-d); font-weight:700; }
-    .pickcount{ text-align:center; font-size:12.5px; color:var(--muted); margin:8px 0; }
+    /* 성취도 입력 */
+    .subj-row{ display:flex; align-items:center; gap:8px; margin:8px 0; }
+    .subj-row .nm{ width:54px; font-weight:700; font-size:13.5px; }
+    .lvls{ display:flex; gap:6px; flex:1; }
+    .lvls button{ flex:1; padding:9px 0; border:1.5px solid var(--line); background:#fff; border-radius:9px; font-size:12.5px; cursor:pointer; color:var(--muted); }
+    .lvls button.good.sel{ background:var(--ok); color:#fff; border-color:var(--ok); }
+    .lvls button.ok.sel{ background:#f6b93b; color:#fff; border-color:#f6b93b; }
+    .lvls button.weak.sel{ background:var(--warn); color:#fff; border-color:var(--warn); }
     /* 결과 */
     .chips{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
     .chip{ font-size:12px; background:#f0effb; color:#444; padding:4px 10px; border-radius:11px; }
@@ -69,8 +69,11 @@
     .rec .nm{ font-weight:700; font-size:14px; }
     .tag{ font-size:10.5px; padding:2px 8px; border-radius:10px; background:#efecff; color:var(--pri); white-space:nowrap; }
     .reasons{ margin:6px 0 0; padding-left:16px; color:var(--muted); font-size:12px; }
-    .cost{ font-weight:700; font-size:12.5px; }
-    .subj-group{ margin:10px 0; } .subj-group .gt{ font-size:13px; font-weight:800; color:var(--pri-d); margin-bottom:6px; }
+    .lvlbadge{ font-size:11px; font-weight:800; padding:2px 8px; border-radius:9px; color:#fff; }
+    .lvlbadge.부족{ background:var(--warn); } .lvlbadge.보통{ background:#f6b93b; }
+    .opt-line{ font-size:12.5px; margin:3px 0; }
+    .free-cost{ color:var(--free); font-weight:800; }
+    .paid-cost{ color:var(--muted); font-weight:700; }
     .subj{ display:inline-block; font-size:12px; background:#f1eeff; color:#3a3550; padding:5px 10px; border-radius:9px; margin:3px 5px 3px 0; }
     .muted{ color:var(--muted); font-size:12.5px; }
     svg.mind{ width:100%; height:auto; display:block; }
@@ -80,7 +83,7 @@
 <div class="app">
   <header>
     <div class="brand">🎓 EduPath</div>
-    <div class="sub">이 시기에 무엇을 공부·준비할지 + 진로 로드맵을 알려드려요</div>
+    <div class="sub">학년별 '이 학년에 할 일' + 과목 보완(무료·저렴 포함) 추천</div>
     <div class="steps"><i id="s0" class="on"></i><i id="s1"></i><i id="s2"></i><i id="s3"></i></div>
   </header>
   <main>
@@ -94,29 +97,32 @@
         <input id="budget" type="number" min="0" placeholder="예: 300000 (비우면 제한 없음)" />
         <p class="hint">입력 정보는 이 브라우저 안에서만 쓰입니다(서버 저장 없음).</p>
       </div>
-      <div class="cta"><button class="btn" id="toGuide" disabled>이 시기 공부·준비 보기 →</button></div>
+      <div class="cta"><button class="btn" id="toPlan" disabled>이 학년에 할 일 보기 →</button></div>
     </section>
 
-    <!-- 1: 가이드 (먼저) -->
+    <!-- 1: 학년별 할 일 -->
     <section id="screen1" class="screen">
-      <div class="card" id="guideCard"><p class="muted">불러오는 중…</p></div>
+      <div class="card" id="planCard"><p class="muted">불러오는 중…</p></div>
       <div class="cta">
-        <button class="btn" id="toPick">관심사 골라 맞춤 로드맵 보기 →</button>
-        <button class="btn ghost" id="toResultDirect">바로 결과(일반계 기준) 보기</button>
+        <button class="btn" id="toInput">과목 수준·관심사 입력 →</button>
+        <button class="btn ghost" id="toResultDirect">바로 결과 보기</button>
         <button class="btn ghost" id="back0">← 나이 다시 선택</button>
       </div>
     </section>
 
-    <!-- 2: 관심사 선택 -->
+    <!-- 2: 성취도 + 관심사 -->
     <section id="screen2" class="screen">
       <div class="card">
-        <h2>해당되는 걸 모두 골라주세요</h2>
-        <p class="hint">점수 매길 필요 없이, 우리 아이에게 맞는 것을 누르면 됩니다. (안 골라도 결과는 나와요)</p>
-        <h3 style="margin-top:12px">좋아하는 활동</h3>
+        <h2>과목별 현재 수준</h2>
+        <p class="hint">시험 점수가 없어도 느낌으로 OK. 부족한 과목엔 무료·저렴 교육을 추천해 드려요.</p>
+        <div id="achv"></div>
+      </div>
+      <div class="card">
+        <h3>좋아하는 활동 (선택)</h3>
+        <p class="hint">우리 아이에게 맞는 걸 누르면 진로·계열이 맞춤으로 좁혀집니다.</p>
         <div class="opts" id="actOpts"></div>
-        <h3 style="margin-top:16px">학습 성향 (해당되면)</h3>
+        <h3 style="margin-top:14px">학습 성향 (해당되면)</h3>
         <div class="opts" id="styOpts"></div>
-        <div class="pickcount"><span id="picked">0</span>개 선택됨</div>
       </div>
       <div class="cta">
         <button class="btn" id="toResult">결과 보기 →</button>
@@ -133,12 +139,13 @@
 </div>
 
 <script>
-const state={ age:null, budget:null, picks:new Set() };
+const state={ age:null, coreSubjects:[], achievements:{}, picks:new Set() };
 const $=s=>document.querySelector(s);
 const TYPE_LABEL={ national_pick:'인기', aptitude_match:'적성맞춤', stage_core:'단계핵심' };
 const RIASEC={ realistic:'현실형 R', investigative:'탐구형 I', artistic:'예술형 A', social:'사회형 S', enterprising:'진취형 E', conventional:'관습형 C' };
-const AGES=[ {v:5,t:'미취학',s:'4~6세'},{v:8,t:'초등 저',s:'1~2학년'},{v:10,t:'초등 중',s:'3~4학년'},
+const AGES=[ {v:5,t:'유치원',s:'4~6세'},{v:8,t:'초등 저',s:'1~2학년'},{v:10,t:'초등 중',s:'3~4학년'},
   {v:12,t:'초등 고',s:'5~6학년'},{v:14,t:'중학생',s:'중1~3'},{v:17,t:'고등학생',s:'고1~3'} ];
+const LVLS=[['good','잘함'],['ok','보통'],['weak','부족']];
 
 function setStep(n){
   ['screen0','screen1','screen2','screen3'].forEach((id,i)=>$('#'+id).classList.toggle('active',i===n));
@@ -147,129 +154,140 @@ function setStep(n){
 }
 function payload(){
   const b=parseInt($('#budget').value,10);
-  const p={ age_years:state.age, interests:[...state.picks] };
+  const p={ age_years:state.age, interests:[...state.picks], achievements:state.achievements };
   if(b) p.budget_max=b;
   return p;
 }
 const post=(url)=>fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload())}).then(r=>r.json());
+const esc=t=>String(t).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+const short=(t,n)=>{ t=String(t); return t.length>n?t.slice(0,n-1)+'…':t; };
 
 // 0
 function renderAges(){
   const g=$('#ageGrid');
   AGES.forEach(a=>{ const b=document.createElement('button'); b.innerHTML=`${a.t}<small>${a.s}</small>`;
-    b.onclick=()=>{ state.age=a.v; $('#ageInput').value=''; [...g.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); $('#toGuide').disabled=false; };
+    b.onclick=()=>{ state.age=a.v; $('#ageInput').value=''; [...g.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); $('#toPlan').disabled=false; };
     g.appendChild(b); });
 }
 $('#ageInput').addEventListener('input',e=>{ const v=parseInt(e.target.value,10);
   [...$('#ageGrid').children].forEach(c=>c.classList.remove('sel'));
-  state.age=(v>=3&&v<=25)?v:null; $('#toGuide').disabled=!state.age; });
+  state.age=(v>=3&&v<=25)?v:null; $('#toPlan').disabled=!state.age; });
 
-// 1 가이드
-async function loadGuide(){
-  const g=await post('/api/guide');
-  $('#guideCard').innerHTML=`
-    <h3>📌 ${g.stage} — 지금 할 일</h3>
-    <div class="headline">${g.headline}</div>
-    <ul class="glist study">${g.study.map(x=>`<li><span class="gtag study">공부</span>${x}</li>`).join('')}</ul>
-    <ul class="glist prep">${g.prepare.map(x=>`<li><span class="gtag prep">준비</span>${x}</li>`).join('')}</ul>
-    <div class="tip">💡 ${g.tip}</div>`;
+// 1 학년별 할 일
+function planHTML(gp){
+  return `<div class="gradeTag">${gp.grade} · ${gp.level}</div>
+    <h3 style="margin-top:10px">📒 이 학년에 이렇게 하세요</h3>
+    <ul class="glist">${gp.todo.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+    <div class="tip">💡 ${esc(gp.tip)}</div>`;
+}
+async function loadPlan(){
+  const gp=await post('/api/grade-plan');
+  state.coreSubjects=gp.subjects;
+  $('#planCard').innerHTML=planHTML(gp);
 }
 
-// 2 관심사
+// 2 성취도 + 관심사
+function renderAchv(){
+  const wrap=$('#achv'); wrap.innerHTML='';
+  state.coreSubjects.forEach(subj=>{
+    const row=document.createElement('div'); row.className='subj-row';
+    row.innerHTML=`<div class="nm">${subj}</div>`;
+    const box=document.createElement('div'); box.className='lvls';
+    LVLS.forEach(([k,lbl])=>{ const b=document.createElement('button'); b.className=k; b.textContent=lbl;
+      b.onclick=()=>{ state.achievements[subj]=lbl; [...box.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); };
+      box.appendChild(b); });
+    row.appendChild(box); wrap.appendChild(row);
+  });
+}
 async function loadActivities(){
   const data=await (await fetch('/api/activities')).json();
-  const mk=(o)=>{ const b=document.createElement('button'); b.className='opt'; b.textContent=o.label;
-    b.onclick=()=>{ b.classList.toggle('sel'); if(state.picks.has(o.id))state.picks.delete(o.id); else state.picks.add(o.id); $('#picked').textContent=state.picks.size; };
-    return b; };
+  const mk=o=>{ const b=document.createElement('button'); b.className='opt'; b.textContent=o.label;
+    b.onclick=()=>{ b.classList.toggle('sel'); state.picks.has(o.id)?state.picks.delete(o.id):state.picks.add(o.id); }; return b; };
   const ao=$('#actOpts'); ao.innerHTML=''; data.interests.forEach(o=>ao.appendChild(mk(o)));
   const so=$('#styOpts'); so.innerHTML=''; data.styles.forEach(o=>so.appendChild(mk(o)));
 }
 
-// 마인드맵 (SVG, 허브-가지)
+// 마인드맵
 function mindmap(pw){
   const ms=pw.milestones, n=ms.length;
-  const W=380, top=24, gap=Math.max(58, Math.min(74,(260)/Math.max(1,n-1)));
+  const W=380, top=24, gap=Math.max(58,Math.min(74,260/Math.max(1,n-1)));
   const H=top*2+(n-1)*gap+20, cy=H/2, cx=78, nx=196, nw=168;
   let s=`<svg class="mind" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="inherit">`;
-  // 연결선
-  ms.forEach((m,i)=>{ const y=top+i*gap+14;
-    s+=`<path d="M ${cx+58} ${cy} C ${cx+110} ${cy}, ${nx-30} ${y}, ${nx} ${y}" stroke="#cfc9f3" stroke-width="2" fill="none"/>`; });
-  // 중심 노드(계열)
-  s+=`<g><rect x="${cx-58}" y="${cy-26}" width="116" height="52" rx="14" fill="#00b894"/>`;
-  s+=`<text x="${cx}" y="${cy-4}" fill="#fff" font-size="11" font-weight="700" text-anchor="middle">추천 계열</text>`;
-  s+=`<text x="${cx}" y="${cy+12}" fill="#fff" font-size="10" text-anchor="middle">${esc(short(pw.recommended_track,12))}</text></g>`;
-  // 단계 노드
-  ms.forEach((m,i)=>{ const y=top+i*gap+14; const cur=i===0;
-    s+=`<g><rect x="${nx}" y="${y-20}" width="${nw}" height="40" rx="12" fill="${cur?'#6c5ce7':'#efecff'}"/>`;
-    s+=`<text x="${nx+12}" y="${y-3}" fill="${cur?'#fff':'#3a3550'}" font-size="11.5" font-weight="700">${esc(m.stage)}${cur?' ·지금':''}</text>`;
-    s+=`<text x="${nx+12}" y="${y+12}" fill="${cur?'#e8e4ff':'#7a7f9a'}" font-size="10">${esc(short((m.focus||[])[0]||'',16))}</text></g>`; });
+  ms.forEach((m,i)=>{ const y=top+i*gap+14; s+=`<path d="M ${cx+58} ${cy} C ${cx+110} ${cy}, ${nx-30} ${y}, ${nx} ${y}" stroke="#cfc9f3" stroke-width="2" fill="none"/>`; });
+  s+=`<g><rect x="${cx-58}" y="${cy-26}" width="116" height="52" rx="14" fill="#00b894"/>
+    <text x="${cx}" y="${cy-4}" fill="#fff" font-size="11" font-weight="700" text-anchor="middle">추천 계열</text>
+    <text x="${cx}" y="${cy+12}" fill="#fff" font-size="10" text-anchor="middle">${esc(short(pw.recommended_track,12))}</text></g>`;
+  ms.forEach((m,i)=>{ const y=top+i*gap+14, cur=i===0;
+    s+=`<g><rect x="${nx}" y="${y-20}" width="${nw}" height="40" rx="12" fill="${cur?'#6c5ce7':'#efecff'}"/>
+      <text x="${nx+12}" y="${y-3}" fill="${cur?'#fff':'#3a3550'}" font-size="11.5" font-weight="700">${esc(m.stage)}${cur?' ·지금':''}</text>
+      <text x="${nx+12}" y="${y+12}" fill="${cur?'#e8e4ff':'#7a7f9a'}" font-size="10">${esc(short((m.focus||[])[0]||'',16))}</text></g>`; });
   return s+`</svg>`;
 }
-const esc=t=>String(t).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
-const short=(t,n)=>{ t=String(t); return t.length>n?t.slice(0,n-1)+'…':t; };
 
 // 결과
 async function showResult(){
-  const [rec,path,subj,guide,ai,careers]=await Promise.all([
-    post('/api/recommend'),post('/api/pathway'),post('/api/subjects'),
-    post('/api/guide'),post('/api/ai-track'),post('/api/careers')]);
-  render(guide,ai,careers,rec,path,subj); setStep(3);
+  const [plan,achv,rec,path,subj,ai,careers]=await Promise.all([
+    post('/api/grade-plan'),post('/api/achievement'),post('/api/recommend'),
+    post('/api/pathway'),post('/api/subjects'),post('/api/ai-track'),post('/api/careers')]);
+  render(plan,achv,ai,careers,rec,path,subj); setStep(3);
 }
-function render(guide,ai,careers,rec,path,subj){
-  const I=rec.aptitude.interest, pw=path.pathway;
-  const topI=Object.entries(I).sort((a,b)=>b[1]-a[1]).slice(0,3);
+function render(plan,achv,ai,careers,rec,path,subj){
+  const I=rec.aptitude.interest, pw=path.pathway, topI=Object.entries(I).sort((a,b)=>b[1]-a[1]).slice(0,3);
   let h='';
-  // 1) 이 시기 할 일 (먼저)
-  h+=`<div class="card"><h3>📌 ${guide.stage} — 지금 할 일</h3><div class="headline">${guide.headline}</div>
-    <ul class="glist study">${guide.study.map(x=>`<li><span class="gtag study">공부</span>${x}</li>`).join('')}</ul>
-    <ul class="glist prep">${guide.prepare.map(x=>`<li><span class="gtag prep">준비</span>${x}</li>`).join('')}</ul>
-    <div class="tip">💡 ${guide.tip}</div></div>`;
-  // 2) AI 시대 역량 (축)
-  h+=`<div class="card"><h3>🤖 AI 시대 역량 — ${ai.stage}</h3><div class="headline">${ai.headline}</div>
-    <ul class="glist study">${ai.skills.map(x=>`<li><span class="gtag study">역량</span>${x}</li>`).join('')}</ul>
-    <div class="chips" style="margin-top:6px">${ai.tools.map(t=>`<span class="chip">${t}</span>`).join('')}</div>
-    <div class="tip">💡 ${ai.tip}</div></div>`;
-  // 3) 마인드맵
-  h+=`<div class="card"><h3>🧠 진로 마인드맵</h3>${mindmap(pw)}
-    <div class="muted" style="margin-top:6px">${(pw.rationale||[]).join(' ')}</div></div>`;
-  // 4) 유망 커리어 추천
-  h+=`<div class="card"><h3>🚀 유망 커리어 추천</h3><div class="muted">${careers.note}</div>`;
-  (careers.careers||[]).forEach(c=>{
-    h+=`<div class="rec"><div class="top"><span class="nm">${c.name}</span><span class="tag">${c.field}</span></div>
-      <div class="muted">📈 ${c.outlook}</div>
-      <ul class="reasons">${c.fit_reasons.map(x=>`<li>${x}</li>`).join('')}</ul>
-      <div class="muted" style="margin-top:4px"><b>지금 준비:</b> ${c.prepare_now.join(', ')}</div>
-      <div class="chips" style="margin-top:4px">${c.key_subjects.map(s=>`<span class="subj">${s}</span>`).join('')}</div></div>`;
-  });
+  // 1) 학년별 할 일 (주 기능)
+  h+=`<div class="card">${planHTML(plan)}</div>`;
+  // 2) 과목 보완 추천
+  h+=`<div class="card"><h3>📌 과목 보완 추천</h3><div class="muted">${achv.note}</div>`;
+  if(achv.weak.length){
+    achv.weak.forEach(w=>{
+      h+=`<div class="rec"><div class="top"><span class="nm">${w.subject}</span><span class="lvlbadge ${w.level}">${w.level}</span></div>
+        <div class="muted" style="margin:4px 0">${w.action}</div>
+        <div style="margin-top:4px"><b style="font-size:12.5px;color:var(--free)">무료·저렴</b>
+          ${w.free.map(o=>`<div class="opt-line">• ${o.name} <span class="free-cost">${o.cost}</span> <span class="muted">${o.note}</span></div>`).join('')}</div>
+        <div style="margin-top:4px"><b style="font-size:12.5px;color:var(--muted)">학원·인강</b>
+          ${w.paid.map(o=>`<div class="opt-line">• ${o.name} <span class="paid-cost">${o.cost}</span></div>`).join('')}</div>
+      </div>`;
+    });
+  }
+  if(achv.strong.length) h+=`<div class="muted" style="margin-top:6px">잘하는 과목: ${achv.strong.join(', ')} — 심화로 강점 키우기 👍</div>`;
   h+=`</div>`;
-  // 5) 적성 요약
+  // 3) AI 시대 역량
+  h+=`<div class="card"><h3>🤖 AI 시대 역량 — ${ai.stage}</h3><div style="font-weight:700;font-size:14px">${ai.headline}</div>
+    <ul class="glist">${ai.skills.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+    <div class="chips">${ai.tools.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>
+    <div class="tip">💡 ${esc(ai.tip)}</div></div>`;
+  // 4) 유망 커리어
+  h+=`<div class="card"><h3>🚀 유망 커리어 추천</h3><div class="muted">${careers.note}</div>`;
+  careers.careers.forEach(c=>{ h+=`<div class="rec"><div class="top"><span class="nm">${c.name}</span><span class="tag">${c.field}</span></div>
+    <div class="muted">📈 ${c.outlook}</div>
+    <ul class="reasons">${c.fit_reasons.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+    <div class="muted" style="margin-top:4px"><b>지금 준비:</b> ${c.prepare_now.join(', ')}</div>
+    <div class="chips" style="margin-top:4px">${c.key_subjects.map(s=>`<span class="subj">${esc(s)}</span>`).join('')}</div></div>`; });
+  h+=`</div>`;
+  // 5) 마인드맵
+  h+=`<div class="card"><h3>🧠 진로 마인드맵</h3>${mindmap(pw)}<div class="muted" style="margin-top:6px">${(pw.rationale||[]).join(' ')}</div></div>`;
+  // 6) 적성
   h+=`<div class="card"><h3>🧭 우리 아이 적성</h3><div class="chips">`
     + topI.map((t,i)=>`<span class="chip ${i===0?'pri':''}">${RIASEC[t[0]]}</span>`).join('')+`</div><div class="riasec">`;
   Object.entries(I).forEach(([k,v])=>{ h+=`<div class="row"><span>${RIASEC[k]}</span><div class="bar"><i style="width:${Math.round(v*100)}%"></i></div></div>`; });
   h+=`</div><div class="mode">🎯 ${rec.study_mode}</div></div>`;
-  // 4) 추천 커리큘럼
-  h+=`<div class="card"><h3>📚 ${rec.stage} 추천 커리큘럼</h3><div class="muted">핵심 역량: ${(rec.stage_competencies||[]).join(', ')}</div>`;
-  (rec.recommendations||[]).slice(0,6).forEach(r=>{ const c=r.cost===0?'무료':r.cost.toLocaleString()+'원';
-    h+=`<div class="rec"><div class="top"><span class="nm">${r.name}</span><span class="tag">${TYPE_LABEL[r.type]||r.type}</span></div>
-      <div class="muted">${r.area} · <span class="cost">${c}</span></div>
-      <ul class="reasons">${r.reasons.map(x=>`<li>${x}</li>`).join('')}</ul></div>`; });
-  h+=`</div>`;
-  // 5) 고교 과목
+  // 7) 고교 과목 (고등만 강조, 그 외 참고)
   h+=`<div class="card"><h3>🎒 고교 과목 추천 <span class="muted">(2022 개정)</span></h3><div class="muted">${subj.note}</div>`;
   Object.entries(subj.groups).forEach(([t,list])=>{ if(!list.length)return;
-    h+=`<div class="subj-group"><div class="gt">${t}</div>`+list.map(s=>`<span class="subj">${s.name}</span>`).join('')+`</div>`; });
+    h+=`<div style="margin:8px 0"><div style="font-size:13px;font-weight:800;color:var(--pri-d);margin-bottom:6px">${t}</div>`
+      +list.map(s=>`<span class="subj">${esc(s.name)}</span>`).join('')+`</div>`; });
   h+=`</div>`;
   $('#result').innerHTML=h;
 }
 
 // 이벤트
-$('#toGuide').onclick=()=>{ setStep(1); loadGuide(); };
-$('#toPick').onclick=()=>{ setStep(2); if(!$('#actOpts').children.length) loadActivities(); };
-$('#toResultDirect').onclick=()=>{ state.picks.clear(); showResult(); };
+$('#toPlan').onclick=()=>{ setStep(1); loadPlan(); };
+$('#toInput').onclick=()=>{ setStep(2); renderAchv(); if(!$('#actOpts').children.length) loadActivities(); };
+$('#toResultDirect').onclick=()=>{ state.picks.clear(); state.achievements={}; showResult(); };
 $('#back0').onclick=()=>setStep(0);
 $('#back1').onclick=()=>setStep(1);
 $('#toResult').onclick=showResult;
-$('#restart').onclick=()=>{ state.picks.clear(); $('#picked')&&($('#picked').textContent='0'); document.querySelectorAll('.opt.sel').forEach(b=>b.classList.remove('sel')); setStep(0); };
+$('#restart').onclick=()=>{ state.picks.clear(); state.achievements={}; setStep(0); };
 
 renderAges();
 </script>
