@@ -90,7 +90,8 @@ def _paid_for(subject: str, age: int) -> list[EduOption]:
     return out[:2]
 
 
-def build_achievement(age_years: int, achievements: dict[str, str]) -> AchievementResponse:
+def build_achievement(age_years: int, achievements: dict[str, str],
+                      subskills: dict[str, str] | None = None) -> AchievementResponse:
     grade = grade_for_age(age_years)
     weak: list[SubjectPlan] = []
     strong: list[str] = []
@@ -114,4 +115,9 @@ def build_achievement(age_years: int, achievements: dict[str, str]) -> Achieveme
         note = "입력한 과목이 모두 양호해요. 강점을 심화로 더 키워 보세요."
     else:
         note = "과목 수준을 입력하면 보완 과목과 무료·저렴 교육을 추천해 드려요."
-    return AchievementResponse(grade=grade.label, note=note, weak=weak, strong=strong)
+    from .subskill import build_subskill_detail
+    detail = build_subskill_detail(subskills or {})
+    if detail:
+        note += " 하위 스킬별 또래 대비 상세도 함께 참고하세요."
+    return AchievementResponse(grade=grade.label, note=note, weak=weak, strong=strong,
+                               subskill_detail=detail)

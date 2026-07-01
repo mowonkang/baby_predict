@@ -132,6 +132,25 @@
     .routebox{ background:#f1eeff; border-radius:11px; padding:10px 12px; margin-top:8px; }
     .routebox .rstep{ font-size:12.5px; margin:4px 0; }
     .routebox .rstep b{ color:var(--pri-d); }
+    /* 행동 관찰(성향) 문항 */
+    .cogq{ margin:10px 0; }
+    .cogq .qq{ font-size:13px; margin-bottom:5px; }
+    .cogq .freq{ display:flex; gap:6px; }
+    .cogq .freq button{ flex:1; padding:8px 0; border:1.5px solid var(--line); background:#fff; border-radius:9px; font-size:11px; color:var(--muted); cursor:pointer; }
+    .cogq .freq button.sel{ background:var(--pri); color:#fff; border-color:var(--pri); font-weight:700; }
+    /* 인지 프로파일(결과) */
+    .cogrow{ display:flex; align-items:center; gap:8px; margin:5px 0; font-size:12px; }
+    .cogrow .cl{ width:62px; color:var(--muted); }
+    .cogrow.top .cl{ color:var(--pri-d); font-weight:800; }
+    .cogbar{ flex:1; height:8px; background:#ece9f8; border-radius:5px; position:relative; overflow:hidden; }
+    .cogbar > i{ display:block; height:100%; background:var(--pri); }
+    .cogrow.top .cogbar > i{ background:var(--ok); }
+    .cogbar .avg{ position:absolute; left:50%; top:-2px; width:2px; height:12px; background:#b8b4d8; }
+    .cogrow .cv{ width:78px; text-align:right; font-size:11px; color:#555; }
+    .subsk{ border-left:3px solid var(--line); padding:6px 10px; margin:7px 0; background:#fbfbff; border-radius:8px; }
+    .subsk.weak{ border-left-color:var(--warn); }
+    .subsk .sh{ display:flex; justify-content:space-between; gap:8px; font-size:13px; font-weight:700; }
+    .subsk .pb{ font-size:11px; color:var(--muted); }
 
     /* ===== 데스크톱(노트북) 풀화면 레이아웃 — 모바일은 위 기본값 유지 ===== */
     @media (min-width:900px){
@@ -216,6 +235,16 @@
         <div id="diagBox"></div>
       </div>
       <div class="card">
+        <h3>📐 무엇이 부족한지 상세 입력 (선택)</h3>
+        <p class="hint">과목을 <b>하위 스킬</b>로 쪼개 평가하면 '또래 평균 대비 무엇이' 부족·우수한지 상세히 보여드려요.</p>
+        <div id="subskillBox"><span class="muted">불러오는 중…</span></div>
+      </div>
+      <div class="card">
+        <h3>🧠 아이 행동 관찰 (성향 파악)</h3>
+        <p class="hint">아이 성향을 몰라도 OK. <b>관찰되는 행동</b>에 빈도로 답하면 5영역(웩슬러 착안) 강·약점을 추정해요. <span class="muted">임상 검사·진단 아님</span></p>
+        <div id="cogQuiz"><span class="muted">불러오는 중…</span></div>
+      </div>
+      <div class="card">
         <h3>좋아하는 활동 (선택)</h3>
         <p class="hint">우리 아이에게 맞는 걸 누르면 진로·계열이 맞춤으로 좁혀집니다.</p>
         <div class="opts" id="actOpts"></div>
@@ -242,7 +271,7 @@
 </div>
 
 <script>
-const state={ age:null, name:'', coreSubjects:[], achievements:{}, picks:new Set(), activities:new Set() };
+const state={ age:null, name:'', coreSubjects:[], achievements:{}, picks:new Set(), activities:new Set(), behaviors:{}, subskills:{} };
 const $=s=>document.querySelector(s);
 const TYPE_LABEL={ national_pick:'인기', aptitude_match:'적성맞춤', stage_core:'단계핵심' };
 const RIASEC={ realistic:'현실형 R', investigative:'탐구형 I', artistic:'예술형 A', social:'사회형 S', enterprising:'진취형 E', conventional:'관습형 C' };
@@ -257,7 +286,7 @@ function setStep(n){
 }
 function payload(){
   const b=parseInt($('#budget').value,10);
-  const p={ age_years:state.age, interests:[...state.picks], achievements:state.achievements, activities:[...state.activities] };
+  const p={ age_years:state.age, interests:[...state.picks], achievements:state.achievements, activities:[...state.activities], behaviors:state.behaviors, subskills:state.subskills };
   if(b) p.budget_max=b;
   const rg=($('#region').value||'').trim(); if(rg) p.region=rg;
   const wh=parseInt($('#weeklyHours').value,10); if(!isNaN(wh)) p.weekly_hours=wh;
@@ -324,6 +353,40 @@ async function loadActivities(){
     b.onclick=()=>{ b.classList.toggle('sel'); state.picks.has(o.id)?state.picks.delete(o.id):state.picks.add(o.id); }; return b; };
   const ao=$('#actOpts'); ao.innerHTML=''; data.interests.forEach(o=>ao.appendChild(mk(o)));
   const so=$('#styOpts'); so.innerHTML=''; data.styles.forEach(o=>so.appendChild(mk(o)));
+}
+// 행동 관찰(성향) 문항
+async function loadCognitive(){
+  const box=$('#cogQuiz'); if(!box) return;
+  const d=await (await fetch('/api/cognitive-items')).json();
+  let s='';
+  d.items.forEach((it,idx)=>{
+    s+=`<div class="cogq"><div class="qq">${idx+1}. ${esc(it.text)}</div><div class="freq" data-item="${esc(it.id)}">`;
+    d.scale.forEach((lbl,v)=>{ s+=`<button type="button" data-v="${v}"${state.behaviors[it.id]===v?' class="sel"':''}>${esc(lbl)}</button>`; });
+    s+=`</div></div>`;
+  });
+  box.innerHTML=s;
+  box.querySelectorAll('.freq').forEach(fr=>{ fr.querySelectorAll('button').forEach(b=>{
+    b.onclick=()=>{ fr.querySelectorAll('button').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
+      state.behaviors[fr.dataset.item]=parseInt(b.dataset.v,10); }; }); });
+}
+// 과목 하위 스킬 상세(선택)
+async function loadSubskills(){
+  const box=$('#subskillBox'); if(!box) return;
+  const d=await (await fetch('/api/subskills')).json();
+  const byS={}; d.items.forEach(o=>{ (byS[o.subject]=byS[o.subject]||[]).push(o); });
+  let s='';
+  Object.entries(byS).forEach(([subj,list])=>{
+    s+=`<div style="font-size:12.5px;font-weight:800;color:var(--muted);margin:8px 0 4px">${esc(subj)}</div>`;
+    list.forEach(o=>{
+      s+=`<div class="subj-row"><div class="nm" style="width:auto;min-width:64px" title="${esc(o.desc)}">${esc(o.name)}</div><div class="lvls" data-sub="${esc(o.id)}">`;
+      LVLS.forEach(([k,lbl])=>{ s+=`<button type="button" class="${k}${state.subskills[o.id]===lbl?' sel':''}">${lbl}</button>`; });
+      s+=`</div></div>`;
+    });
+  });
+  box.innerHTML=s;
+  box.querySelectorAll('.lvls').forEach(lv=>{ lv.querySelectorAll('button').forEach(b=>{
+    b.onclick=()=>{ lv.querySelectorAll('button').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
+      state.subskills[lv.dataset.sub]=b.textContent; }; }); });
 }
 async function loadExtracurriculars(){
   const data=await (await fetch('/api/extracurriculars')).json();
@@ -466,6 +529,27 @@ function statsHTML(st){
     ${st.top_axes.length?`<div class="chips" style="margin-top:8px"><span class="muted" style="align-self:center">강점</span>${st.top_axes.map(t=>`<span class="chip pri">${esc(t)}</span>`).join('')}</div>`:''}
     ${st.growth_axes.length?`<div class="chips"><span class="muted" style="align-self:center">보강</span>${st.growth_axes.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`:''}
     ${sig}<div class="muted" style="margin-top:6px">${esc(st.note)}</div></div>`;
+}
+
+// 인지 성향 프로파일 (WISC 5영역 착안, 또래 대비 밴드)
+function cognitiveHTML(cog){
+  if(!cog || !cog.answered) return '';  // 행동 문항 미응답이면 표시 안 함
+  const bandColor=b=>b==='우수'?'#00b894':b==='평균상'?'#0984e3':b==='또래 평균'?'#6c5ce7':b==='평균하'?'#f6b93b':'#e17055';
+  let rows='';
+  cog.domains.forEach(d=>{
+    if(!d.answered) return;
+    const w=Math.max(4,Math.min(100,(d.index-55)/0.9));  // 55~145 → 0~100%
+    rows+=`<div class="cogrow ${d.top?'top':''}"><span class="cl" title="${esc(d.hint)}">${esc(d.label)}</span>
+      <div class="cogbar"><i style="width:${w.toFixed(0)}%;background:${bandColor(d.band)}"></i><span class="avg" title="또래 평균"></span></div>
+      <span class="cv">${esc(d.band)} · ~${d.percentile}%</span></div>`;
+  });
+  return `<div class="card"><h3>🧠 인지 성향 프로파일 <span class="muted">(${esc(cog.headline)})</span></h3>
+    <div class="cogrow" style="font-size:11px;color:var(--muted)"><span class="cl"></span>
+      <div class="cogbar" style="background:none"><span class="avg"></span></div><span class="cv">↑또래 평균</span></div>
+    ${rows}
+    ${cog.strengths.length?`<div class="chips" style="margin-top:8px"><span class="muted" style="align-self:center">강점</span>${cog.strengths.map(t=>`<span class="chip pri">${esc(t)}</span>`).join('')}</div>`:''}
+    ${cog.supports.length?`<div class="chips"><span class="muted" style="align-self:center">보완</span>${cog.supports.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`:''}
+    <div class="src">${esc(cog.note)}</div></div>`;
 }
 
 // 사교육 테크트리 (스타크래프트식 진행 + 추천 루트 하이라이트)
@@ -790,15 +874,15 @@ function planHTML2(pl){
 // 결과
 async function showResult(){
   state.name=($('#childName').value||'').trim();
-  const [plan,units,splan,achv,rec,path,subj,ai,careers,life,aca,persona,tt]=await Promise.all([
+  const [plan,units,splan,achv,rec,path,subj,ai,careers,life,aca,persona,tt,cog]=await Promise.all([
     post('/api/grade-plan'),post('/api/units'),post('/api/plan'),post('/api/achievement'),post('/api/recommend'),
     post('/api/pathway'),post('/api/subjects'),post('/api/ai-track'),post('/api/careers'),
-    post('/api/lifecycle'),post('/api/academies'),post('/api/persona'),post('/api/techtree')]);
+    post('/api/lifecycle'),post('/api/academies'),post('/api/persona'),post('/api/techtree'),post('/api/cognitive')]);
   state.weakSubject = (achv.weak && achv.weak.length) ? achv.weak[0].subject : (state.coreSubjects[0]||'수학');
   saveHistory(plan.grade); saveProfile(plan.grade); saveSync();
-  render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,tt); setStep(3);
+  render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,tt,cog); setStep(3);
 }
-function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,tt){
+function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,tt,cog){
   const I=rec.aptitude.interest, pw=path.pathway, topI=Object.entries(I).sort((a,b)=>b[1]-a[1]).slice(0,3);
   let h='';
   // 0) 게임화(스트릭·뱃지) + 리포트
@@ -809,6 +893,7 @@ function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,
   h+=personaHTML(persona);
   // 0.7) 능력치 스탯(8각 레이더) + 사교육 테크트리 (육성 엔진)
   if(tt&&tt.stat) h+=statsHTML(tt.stat);
+  h+=cognitiveHTML(cog);
   if(tt&&tt.tracks) h+=techtreeHTML(tt);
   // 1) 학년별 할 일 (주 기능)
   h+=`<div class="card">${planHTML(plan)}</div>`;
@@ -832,6 +917,13 @@ function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,
     });
   }
   if(achv.strong.length) h+=`<div class="muted" style="margin-top:6px">잘하는 과목: ${achv.strong.join(', ')} — 심화로 강점 키우기 👍</div>`;
+  if(achv.subskill_detail && achv.subskill_detail.length){
+    h+=`<div class="gt" style="margin:10px 0 4px">🔬 하위 스킬 상세 <span class="muted">(또래 평균 대비)</span></div>`;
+    achv.subskill_detail.forEach(d=>{ h+=`<div class="subsk ${d.weak?'weak':''}">
+      <div class="sh"><span>${esc(d.subject)} · ${esc(d.name)}</span><span class="pb">${esc(d.peer_band)} · ~${d.percentile}%</span></div>
+      <div class="muted" style="margin-top:3px">${esc(d.what)}</div>
+      <div class="opt-line">👉 ${esc(d.how)}</div></div>`; });
+  }
   h+=`</div>`;
   // 2.5) 추천 학원 (필요한 사교육)
   h+=academiesHTML(aca);
@@ -870,12 +962,12 @@ function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,
 
 // 이벤트
 $('#toPlan').onclick=()=>{ setStep(1); loadPlan(); };
-$('#toInput').onclick=()=>{ setStep(2); renderAchv(); if(!$('#actOpts').children.length) loadActivities(); if(!$('#exOpts').children.length) loadExtracurriculars(); };
-$('#toResultDirect').onclick=()=>{ state.picks.clear(); state.activities.clear(); state.achievements={}; showResult(); };
+$('#toInput').onclick=()=>{ setStep(2); renderAchv(); if(!$('#actOpts').children.length) loadActivities(); if(!$('#exOpts').children.length) loadExtracurriculars(); if(!$('#cogQuiz').querySelector('.cogq')) loadCognitive(); if(!$('#subskillBox').querySelector('.subj-row')) loadSubskills(); };
+$('#toResultDirect').onclick=()=>{ state.picks.clear(); state.activities.clear(); state.achievements={}; state.behaviors={}; state.subskills={}; showResult(); };
 $('#back0').onclick=()=>setStep(0);
 $('#back1').onclick=()=>setStep(1);
 $('#toResult').onclick=showResult;
-$('#restart').onclick=()=>{ state.picks.clear(); state.activities.clear(); state.achievements={}; setStep(0); };
+$('#restart').onclick=()=>{ state.picks.clear(); state.activities.clear(); state.achievements={}; state.behaviors={}; state.subskills={}; setStep(0); };
 $('#loadSync').onclick=loadSync;
 $('#startDiag').onclick=loadDiagnostic;
 

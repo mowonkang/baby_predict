@@ -41,11 +41,14 @@ from .stats import build_stats
 from .techtree import build_techtree
 from .extracurricular import CATEGORIES, EXTRACURRICULARS
 from .local import build_local_hub
-from . import community
+from . import cognitive, community, subskill
 from .models import (
     AchievementResponse,
     AiTrackResponse,
     CareersResponse,
+    CognitiveItemsResponse,
+    CognitiveProfile,
+    SubskillOptionsResponse,
     CommunityCommentSubmit,
     CommunityListResponse,
     CommunityPost,
@@ -136,8 +139,8 @@ def post_grade_plan(profile: StudentProfile) -> GradePlanResponse:
 
 @app.post("/api/achievement", response_model=AchievementResponse)
 def post_achievement(profile: StudentProfile) -> AchievementResponse:
-    """과목별 성취수준(잘함/보통/부족) → 보완 과목 + 학원·무료/저렴 교육 추천."""
-    return build_achievement(profile.age_years, profile.achievements)
+    """과목별 성취수준(잘함/보통/부족) → 보완 과목 + 학원·무료/저렴 교육 추천 + 하위스킬 또래비교."""
+    return build_achievement(profile.age_years, profile.achievements, profile.subskills)
 
 
 @app.post("/api/lifecycle", response_model=LifecycleResponse)
@@ -217,8 +220,28 @@ def get_extracurriculars() -> ExtracurricularOptionsResponse:
 
 @app.post("/api/stats", response_model=StatProfile)
 def post_stats(profile: StudentProfile) -> StatProfile:
-    """능력치 스탯(8각형 레이더) — 관심·경험·성취를 규칙으로 합산(무과금)."""
+    """능력치 스탯(8각형 레이더) — 관심·경험·성취·행동관찰을 규칙으로 합산(무과금)."""
     return build_stats(profile)
+
+
+@app.get("/api/cognitive-items", response_model=CognitiveItemsResponse)
+def get_cognitive_items() -> CognitiveItemsResponse:
+    """관찰형 인지 성향 행동 문항(WISC 5영역 착안). 성향을 몰라도 행동으로 답할 수 있어요."""
+    return CognitiveItemsResponse(
+        scale=cognitive.SCALE, items=cognitive.items(),
+        note="관찰 가능한 행동에 빈도로 답하세요. 임상 지능검사·진단이 아닌 참고용입니다.")
+
+
+@app.post("/api/cognitive", response_model=CognitiveProfile)
+def post_cognitive(profile: StudentProfile) -> CognitiveProfile:
+    """행동 문항 응답 → 5영역 인지 성향 프로파일(또래 대비 밴드, 진단 아님, 무과금)."""
+    return cognitive.build_cognitive(profile.behaviors)
+
+
+@app.get("/api/subskills", response_model=SubskillOptionsResponse)
+def get_subskills() -> SubskillOptionsResponse:
+    """과목 하위 스킬 목록(수학=연산·개념·응용 등). '무엇이' 부족한지 상세 입력용."""
+    return SubskillOptionsResponse(subjects=subskill.subjects(), items=subskill.options())
 
 
 @app.get("/api/local-hub", response_model=LocalHubResponse)

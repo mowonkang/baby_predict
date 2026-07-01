@@ -16,7 +16,7 @@ backend_edu/
 │  ├─ pathway.py       # 적성 → 미취학~대학 교육 path 생성기
 │  └─ main.py          # FastAPI 엔드포인트
 ├─ static/index.html   # 데모 UI (적성 진단 → 추천 + 로드맵 타임라인)
-└─ tests/              # pytest (46 cases)
+└─ tests/              # pytest (54 cases)
 ```
 
 ## 실행
@@ -48,7 +48,9 @@ uvicorn app.main:app --reload
 | POST | `/api/mastery` | 진단 응답 → **숙련도(BKT) + IRT(또래 백분위·적정 난이도) + 분산복습일(D-day)** — LLM 없음 |
 | POST | `/api/persona` | 흥미·학습성향·성취 통합 **학습 페르소나 라벨** |
 | GET | `/api/extracurriculars` | 사교육·활동(몬테소리·영어·태권도·미술 등) **계열별 선택지**(쉬운 탭 입력) |
-| POST | `/api/stats` | 관심·경험·성취 → **8각형 능력치 스탯**(레이더) — 규칙 기반, **LLM 없음** |
+| POST | `/api/stats` | 관심·경험·성취·**행동관찰** → **8각형 능력치 스탯**(레이더, 삼각측량) — **LLM 없음** |
+| GET `/api/cognitive-items` · POST `/api/cognitive` | **관찰형 인지 성향**(WISC 5영역 착안, 또래 대비 밴드·백분위) — 성향 몰라도 행동으로 응답, 진단 아님 |
+| GET | `/api/subskills` | 과목 **하위 스킬**(수학=연산·개념·응용 등) — '무엇이' 부족한지 상세 입력용 |
 | POST | `/api/techtree` | 능력치·나이 → **사교육 전체 테크트리 + 추천 루트**(스타크래프트식) — **LLM 없음** |
 | GET | `/api/local-hub` | 지역·과목 → **실제 학원 목록 + 지도(카카오/네이버) + 맘카페 후기 딥링크**(키 있으면 실시간) |
 | GET `/api/community` · POST `/api/community` · `/{id}/comment` · `/{id}/like` | **엄마들 인앱 커뮤니티**(지역·주제별 글·댓글·공감) |

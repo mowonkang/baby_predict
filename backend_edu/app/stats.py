@@ -117,6 +117,16 @@ def build_stats(profile: StudentProfile) -> StatProfile:
                     scores[stat] += w * _EXTRA_SCALE
         signals.append("사교육/활동 경험")
 
+    # 3.5) 관찰형 인지 성향(WISC 착안 행동 문항) — 성향 역추론·삼각측량
+    if profile.behaviors:
+        from .cognitive import stat_contributions
+        contribs = stat_contributions(profile.behaviors)
+        if contribs:
+            for stat, gain in contribs.items():
+                if stat in scores:
+                    scores[stat] += gain
+            signals.append("행동 관찰(인지 성향)")
+
     # 4) 과목 성취
     if profile.achievements:
         used = False
