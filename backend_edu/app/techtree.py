@@ -100,6 +100,30 @@ TRACKS: tuple[_Track, ...] = (
     )),
 )
 
+# ── 공신력 체계 결합 ─────────────────────────────────────
+# 재능발달 단계 라벨 — Bloom 3단계(놀이·흥미→기술습득→전문화) + Gagné DMGT(개발 과정) 근거
+_STAGE = {0: "탐색·흥미(놀이)", 1: "탐색→기술 습득", 2: "기술 습득(체계 훈련)", 3: "전문화(진로 연결)"}
+
+# 트랙별 공인 등급 체계(실존하는 '테크트리')
+_CERT_SYSTEM: dict[str, str] = {
+    "lang": "CEFR(유럽공통 언어참조기준)",
+    "think": "경시·올림피아드(KMO·KOI)",
+    "sci": "전람회·영재원·올림피아드",
+    "art": "ABRSM 등급(음악)·콩쿠르/입시 실기",
+    "phys": "국기원 품·단(태권도)·수영 급수",
+    "human": "한국사능력검정·한자급수·활동 포트폴리오",
+}
+
+# 노드별 공인 등급 목표(객관적 이정표 — 취득이 목적은 아님)
+_CERT: dict[str, str] = {
+    "lang0": "Pre-A1(노출 단계)", "lang1": "CEFR A1~A2", "lang2": "CEFR B1", "lang3": "CEFR B2+·수능/공인시험",
+    "think1": "교내 경시·COS 코딩", "think2": "HME·KMO 예선/KOI", "think3": "KMO 본선·수리논술",
+    "sci1": "학교 과학전람회", "sci2": "교육청 영재원·발명대회", "sci3": "전국과학전람회·과학올림피아드",
+    "art1": "ABRSM 1~3급·주니어 콩쿠르", "art2": "ABRSM 4~6급·콩쿠르 입상", "art3": "ABRSM 7~8급·예중예고 실기",
+    "phys1": "국기원 품띠·수영 급수", "phys2": "국기원 1~2품·급수 상급", "phys3": "단증·선수 등록",
+    "human1": "한자급수 8~6급·독서 기록", "human2": "한국사능력검정 기본·토론대회", "human3": "봉사·대외활동 포트폴리오",
+}
+
 # 능력치 stat → 대표 트랙 key (추천 매칭용)
 _STAT_TRACK: dict[str, str] = {
     "language": "lang",
@@ -144,6 +168,7 @@ def _to_node(n: _Node, *, recommended: bool = False, reason: str = "",
         id=n.id, label=n.label, tier=n.tier, age_hint=n.age_hint, stat=n.stat,
         requires=list(n.requires), cost_band=n.cost_band, free_alt=n.free_alt,
         recommended=recommended, reason=reason, done=done,
+        cert=_CERT.get(n.id, ""), stage=_STAGE[n.tier],
     )
 
 
@@ -208,7 +233,8 @@ def build_techtree(profile: StudentProfile) -> TechTreeResponse:
                 route.append(node)
         tracks_out.append(TechTrack(
             key=tr.key, label=tr.label, stat=tr.stat,
-            nodes=nodes_out, recommended=is_rec_track))
+            nodes=nodes_out, recommended=is_rec_track,
+            cert_system=_CERT_SYSTEM.get(tr.key, "")))
 
     route.sort(key=lambda n: (n.tier, n.id))
     rec_labels = [tr.label for tr in TRACKS if tr.key in rec_track_keys]

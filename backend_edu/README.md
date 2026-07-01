@@ -16,7 +16,7 @@ backend_edu/
 │  ├─ pathway.py       # 적성 → 미취학~대학 교육 path 생성기
 │  └─ main.py          # FastAPI 엔드포인트
 ├─ static/index.html   # 데모 UI (적성 진단 → 추천 + 로드맵 타임라인)
-└─ tests/              # pytest (54 cases)
+└─ tests/              # pytest (66 cases)
 ```
 
 ## 실행
@@ -51,7 +51,10 @@ uvicorn app.main:app --reload
 | POST | `/api/stats` | 관심·경험·성취·**행동관찰** → **8각형 능력치 스탯**(레이더, 삼각측량) — **LLM 없음** |
 | GET `/api/cognitive-items` · POST `/api/cognitive` | **관찰형 인지 성향**(WISC 5영역 착안, 또래 대비 밴드·백분위) — 성향 몰라도 행동으로 응답, 진단 아님 |
 | GET | `/api/subskills` | 과목 **하위 스킬**(수학=연산·개념·응용 등) — '무엇이' 부족한지 상세 입력용 |
-| POST | `/api/techtree` | 능력치·나이 → **사교육 전체 테크트리 + 추천 루트**(스타크래프트식) — **LLM 없음** |
+| GET `/api/temperament-items` · POST `/api/temperament` | **기질 프로파일**(Rothbart CBQ 3요인 착안: 외향성·정서민감성·의도적조절) + 유형·환경 가이드(조화의 적합성) — 진단 아님 |
+| POST | `/api/techtree` | 능력치·나이 → **사교육 전체 테크트리 + 추천 루트**(공인 등급 🎖 CEFR·국기원·ABRSM + Bloom·DMGT 재능발달 단계) — **LLM 없음** |
+| POST | `/api/projection` | **예상 능력치 전망** — 성장도표(백분위 트래킹) + Gagné DMGT 촉매 논리, 낙관/기본/보수 3밴드(참고용) |
+| GET | `/api/frameworks` | 서비스가 차용한 **공신력 평가·발달 체계 목록**(투명성 공개) |
 | GET | `/api/local-hub` | 지역·과목 → **실제 학원 목록 + 지도(카카오/네이버) + 맘카페 후기 딥링크**(키 있으면 실시간) |
 | GET `/api/community` · POST `/api/community` · `/{id}/comment` · `/{id}/like` | **엄마들 인앱 커뮤니티**(지역·주제별 글·댓글·공감) |
 | POST | `/api/report` | **부모 리포트**(페르소나·이 학년 할 일·보완·주간계획 요약) |

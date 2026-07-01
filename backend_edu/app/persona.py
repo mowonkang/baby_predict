@@ -35,6 +35,14 @@ def build_persona(profile: StudentProfile) -> PersonaResponse:
     persona_label = f"{interest_label}·{style_label} 학습자"
     subject_levels = {s: levels.coarse(lv) for s, lv in profile.achievements.items()}
 
+    # 기질(CBQ 착안) — 행동 응답(tp_*)이 있으면 페르소나에 결합
+    from .temperament import build_temperament
+    temp = build_temperament(profile.behaviors)
+    temperament_label = temp.type_label if temp.answered else ""
+    fit_guide = temp.fit_guide if temp.answered else ""
+    if temperament_label:
+        persona_label = f"{interest_label}·{style_label}·{temperament_label} 학습자"
+
     note = ("뚜렷한 강점이 아직 드러나지 않았어요 — 관심 활동·미니 진단을 더하면 페르소나가 선명해집니다."
             if interest_label == "탐색형"
             else f"{interest_label} 흥미 + {style_label} 성향을 반영해 학습·진로를 맞춤화합니다.")
@@ -44,4 +52,5 @@ def build_persona(profile: StudentProfile) -> PersonaResponse:
         top_interests=[_RIASEC_KO.get(t, t) for t in top],
         persona_label=persona_label, study_mode=summarize_study_mode(apt.learning_style),
         subject_levels=subject_levels, note=note,
+        temperament_label=temperament_label, fit_guide=fit_guide,
     )

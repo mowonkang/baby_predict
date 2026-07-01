@@ -250,6 +250,9 @@
         <h3>🧠 아이 행동 관찰 (성향 파악)</h3>
         <p class="hint">아이 성향을 몰라도 OK. 각 행동을 <b>또래 아이와 비교</b>해 골라주세요 → 5영역(웩슬러 착안) 상대 강·약점을 추정해요. <span class="muted">임상 검사·진단 아님</span></p>
         <div id="cogQuiz"><span class="muted">불러오는 중…</span></div>
+        <h3 style="margin-top:16px">🌡️ 기질 (또래 대비)</h3>
+        <p class="hint">기질에는 좋고 나쁨이 없어요 — <b>Rothbart CBQ 3요인</b>(외향성·정서민감성·의도적조절) 착안. 아이에게 맞는 환경을 찾아드려요.</p>
+        <div id="tempQuiz"><span class="muted">불러오는 중…</span></div>
       </div>
       <div class="card">
         <h3>좋아하는 활동 (선택)</h3>
@@ -371,19 +374,28 @@ async function loadActivities(){
   const so=$('#styOpts'); so.innerHTML=''; data.styles.forEach(o=>so.appendChild(mk(o)));
 }
 // 행동 관찰(성향) 문항
-async function loadCognitive(){
-  const box=$('#cogQuiz'); if(!box) return;
-  const d=await (await fetch('/api/cognitive-items')).json();
+// 또래 대비 문항 퀴즈 공통 렌더러(인지·기질 공용) — 응답은 state.behaviors에 저장
+function renderFreqQuiz(box, items, scale){
   let s='';
-  d.items.forEach((it,idx)=>{
+  items.forEach((it,idx)=>{
     s+=`<div class="cogq"><div class="qq">${idx+1}. ${esc(it.text)}</div><div class="freq" data-item="${esc(it.id)}">`;
-    d.scale.forEach((lbl,v)=>{ s+=`<button type="button" data-v="${v}"${state.behaviors[it.id]===v?' class="sel"':''}>${esc(lbl)}</button>`; });
+    scale.forEach((lbl,v)=>{ s+=`<button type="button" data-v="${v}"${state.behaviors[it.id]===v?' class="sel"':''}>${esc(lbl)}</button>`; });
     s+=`</div></div>`;
   });
   box.innerHTML=s;
   box.querySelectorAll('.freq').forEach(fr=>{ fr.querySelectorAll('button').forEach(b=>{
     b.onclick=()=>{ fr.querySelectorAll('button').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
       state.behaviors[fr.dataset.item]=parseInt(b.dataset.v,10); }; }); });
+}
+async function loadCognitive(){
+  const box=$('#cogQuiz'); if(!box) return;
+  const d=await (await fetch('/api/cognitive-items')).json();
+  renderFreqQuiz(box, d.items, d.scale);
+}
+async function loadTemperament(){
+  const box=$('#tempQuiz'); if(!box) return;
+  const d=await (await fetch('/api/temperament-items')).json();
+  renderFreqQuiz(box, d.items, d.scale);
 }
 // 과목 하위 스킬 상세(선택) — 나이에 맞는 과목만, 또래 대비 5단계
 async function loadSubskills(){
@@ -486,13 +498,47 @@ async function openReport(){
   w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>{ try{w.print();}catch(e){} }, 400);
 }
 
-// 페르소나
+// 페르소나 (흥미 × 성향 × 기질)
 function personaHTML(p){
+  const temp = p.temperament_label
+    ? `<div class="chips" style="margin-top:6px"><span class="chip pri">🌡️ 기질: ${esc(p.temperament_label)}</span><span class="chip">CBQ 3요인 착안</span></div>
+       <div class="tip" style="margin-top:6px">🧩 환경 맞춤: ${esc(p.fit_guide)}</div>` : '';
   return `<div class="card"><h3>🧬 학습 페르소나</h3>
     <div class="track" style="background:#6c5ce7">${esc(p.persona_label)}</div>
     <div class="chips" style="margin-top:6px">${p.top_interests.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>
+    ${temp}
     <div class="muted" style="margin-top:6px">${esc(p.note)}</div>
     <div class="mode" style="margin-top:6px">🎯 ${esc(p.study_mode)}</div></div>`;
+}
+
+// 예상 능력치 전망 (성장도표 + Gagné DMGT 촉매, 낙관/기본/보수 3밴드)
+function projectionHTML(pr){
+  if(!pr || !pr.projections) return '';
+  let rows='';
+  pr.projections.forEach(p=>{
+    const seg=(v,c)=>`<span style="position:absolute;left:${v}%;top:-2px;width:2.5px;height:12px;background:${c};border-radius:2px"></span>`;
+    rows+=`<div class="statrow"><span>${esc(p.label)}</span>
+      <div class="statbar" style="position:relative;overflow:visible">
+        <i style="width:${p.now}%;background:#c7c3e0"></i>
+        ${seg(p.conservative,'#f6b93b')}${seg(p.base,'#6c5ce7')}${seg(p.optimistic,'#00b894')}
+      </div><b title="보수/기본/낙관">${p.base}</b></div>`;
+  });
+  return `<div class="card"><h3>🔮 예상 능력치 전망 <span class="muted">(${esc(pr.horizon_label)})</span></h3>
+    <div class="chips"><span class="chip" style="background:#fff3cd;color:#7a5b00">● 보수</span>
+      <span class="chip pri">● 기본(추천 루트 이행)</span>
+      <span class="chip" style="background:#eafaf3;color:#0a8">● 낙관(+촉매)</span></div>
+    <div class="statlist" style="margin-top:8px">${rows}</div>
+    <div class="gt" style="margin:10px 0 4px">전망을 끌어올리는 요인 (Gagné DMGT)</div>
+    <ul class="reasons">${pr.drivers.map(d=>`<li>${esc(d)}</li>`).join('')}</ul>
+    <div class="src">${esc(pr.note)}</div></div>`;
+}
+
+// 참고한 공신력 체계 (투명성)
+function frameworksHTML(fw){
+  if(!fw || !fw.frameworks) return '';
+  return `<div class="card"><h3>📚 참고한 공신력 체계 <span class="muted">(투명성 공개)</span></h3>
+    ${fw.frameworks.map(f=>`<div class="opt-line" title="${esc(f.what)}">• <b>${esc(f.name)}</b> <span class="muted">— ${esc(f.authority)}</span><br><span class="muted" style="padding-left:10px">↳ ${esc(f.how_used)}</span></div>`).join('')}
+    <div class="src">${esc(fw.note)}</div></div>`;
 }
 
 // 능력치 8각형 레이더 (프린세스 메이커식)
@@ -583,16 +629,18 @@ function techtreeHTML(tt){
     tr.nodes.forEach(n=>{
       const cls=n.done?'done':(n.recommended?'on':'');
       const badge=n.done?'<span class="rbadge" style="background:#8a8fb0">완료</span>':(n.recommended?'<span class="rbadge">추천</span>':'');
-      h+=`<div class="tnode ${cls}">${badge}
+      h+=`<div class="tnode ${cls}" title="${esc(n.stage||'')}">${badge}
         <div class="tn">${n.done?'✅ ':''}${esc(n.label)}</div><div class="ta">${esc(n.age_hint)} · 비용 ${esc(n.cost_band)}</div>
+        ${n.cert?`<div class="ta" style="color:#5a49d6">🎖 ${esc(short(n.cert,24))}</div>`:''}
         ${n.free_alt?`<div class="tfree">무료대안: ${esc(short(n.free_alt,22))}</div>`:''}</div>`;
     });
     h+=`</div></div>`;
   });
   h+=`</div>`;
+  h+=`<div class="muted" style="margin:4px 0">단계 라벨(탐색·흥미→기술 습득→전문화)은 Bloom 재능발달 3단계·Gagné DMGT를, 🎖 등급은 CEFR·국기원·ABRSM 등 공인 체계를 따릅니다.</div>`;
   if(tt.route&&tt.route.length){
     h+=`<div class="routebox"><b style="font-size:12.5px">🚩 지금 우리 아이 추천 루트</b>`;
-    tt.route.forEach(n=>{ h+=`<div class="rstep">• <b>${esc(n.label)}</b> <span class="muted">(${esc(n.age_hint)})</span> — ${esc(n.reason)}</div>`; });
+    tt.route.forEach(n=>{ h+=`<div class="rstep">• <b>${esc(n.label)}</b> <span class="muted">(${esc(n.age_hint)} · ${esc(n.stage)})</span>${n.cert?` · <span style="color:#5a49d6">🎖 ${esc(n.cert)}</span>`:''} — ${esc(n.reason)}</div>`; });
     h+=`</div>`;
   }
   h+=`<div class="muted" style="margin-top:6px">${esc(tt.note)}</div></div>`;
@@ -891,15 +939,16 @@ function planHTML2(pl){
 // 결과
 async function showResult(){
   state.name=($('#childName').value||'').trim();
-  const [plan,units,splan,achv,rec,path,subj,ai,careers,life,aca,persona,tt,cog]=await Promise.all([
+  const [plan,units,splan,achv,rec,path,subj,ai,careers,life,aca,persona,tt,cog,proj,fw]=await Promise.all([
     post('/api/grade-plan'),post('/api/units'),post('/api/plan'),post('/api/achievement'),post('/api/recommend'),
     post('/api/pathway'),post('/api/subjects'),post('/api/ai-track'),post('/api/careers'),
-    post('/api/lifecycle'),post('/api/academies'),post('/api/persona'),post('/api/techtree'),post('/api/cognitive')]);
+    post('/api/lifecycle'),post('/api/academies'),post('/api/persona'),post('/api/techtree'),post('/api/cognitive'),
+    post('/api/projection'),fetch('/api/frameworks').then(r=>r.json())]);
   state.weakSubject = (achv.weak && achv.weak.length) ? achv.weak[0].subject : (state.coreSubjects[0]||'수학');
   saveHistory(plan.grade); saveProfile(plan.grade); saveSync();
-  render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,tt,cog); setStep(3);
+  render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,tt,cog,proj,fw); setStep(3);
 }
-function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,tt,cog){
+function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,tt,cog,proj,fw){
   const I=rec.aptitude.interest, pw=path.pathway, topI=Object.entries(I).sort((a,b)=>b[1]-a[1]).slice(0,3);
   let h='';
   // 0) 게임화(스트릭·뱃지) + 리포트
@@ -912,6 +961,8 @@ function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,
   if(tt&&tt.stat) h+=statsHTML(tt.stat);
   h+=cognitiveHTML(cog);
   if(tt&&tt.tracks) h+=techtreeHTML(tt);
+  // 0.8) 예상 능력치 전망(성장도표+DMGT)
+  h+=projectionHTML(proj);
   // 1) 학년별 할 일 (주 기능)
   h+=`<div class="card">${planHTML(plan)}</div>`;
   // 1.1) 적응형 주간 학습계획
@@ -973,13 +1024,15 @@ function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,
     h+=`<div style="margin:8px 0"><div style="font-size:13px;font-weight:800;color:var(--pri-d);margin-bottom:6px">${t}</div>`
       +list.map(s=>`<span class="subj">${esc(s.name)}</span>`).join('')+`</div>`; });
   h+=`</div>`;
+  // 8) 참고한 공신력 체계(투명성)
+  h+=frameworksHTML(fw);
   $('#result').innerHTML=h;
   loadLocalHub(); loadCommunity();
 }
 
 // 이벤트
 $('#toPlan').onclick=()=>{ setStep(1); loadPlan(); };
-$('#toInput').onclick=()=>{ setStep(2); renderAchv(); if(!$('#actOpts').children.length) loadActivities(); if(!$('#exOpts').children.length) loadExtracurriculars(); if(!$('#cogQuiz').querySelector('.cogq')) loadCognitive(); if(!$('#subskillBox').querySelector('.subj-row')) loadSubskills(); };
+$('#toInput').onclick=()=>{ setStep(2); renderAchv(); if(!$('#actOpts').children.length) loadActivities(); if(!$('#exOpts').children.length) loadExtracurriculars(); if(!$('#cogQuiz').querySelector('.cogq')) loadCognitive(); if(!$('#tempQuiz').querySelector('.cogq')) loadTemperament(); if(!$('#subskillBox').querySelector('.subj-row')) loadSubskills(); };
 $('#toResultDirect').onclick=()=>{ state.picks.clear(); state.activities.clear(); state.achievements={}; state.behaviors={}; state.subskills={}; showResult(); };
 $('#back0').onclick=()=>setStep(0);
 $('#back1').onclick=()=>setStep(1);
