@@ -467,6 +467,113 @@ function techtreeHTML(tt){
   return h;
 }
 
+// 우리 동네 실제 학원 + 지도 + 맘카페 (지역 허브)
+function defRegion(){ return ($('#region')?.value||'').trim(); }
+function defSubject(){ return (state.weakSubject||'수학'); }
+function localCardShell(){
+  return `<div class="card"><h3>🏫 우리 동네 학원·지도·맘카페</h3>
+    <p class="hint">실제 학원 목록과 <b>지도</b>·<b>맘카페 후기</b>를 바로 연결해 드려요.</p>
+    <div class="rvform">
+      <input class="txt" id="lhRegion" maxlength="30" placeholder="지역 (예: 서울 노원 중계동)" value="${esc(defRegion())}" />
+      <input id="lhSubject" style="max-width:90px" maxlength="10" placeholder="과목" value="${esc(defSubject())}" />
+      <button onclick="loadLocalHub()">검색</button></div>
+    <div id="lhResult"><span class="muted">지역·과목을 넣고 검색을 눌러주세요.</span></div></div>`;
+}
+async function loadLocalHub(){
+  const box=$('#lhResult'); if(!box) return;
+  const region=($('#lhRegion')?.value||'').trim(), subject=($('#lhSubject')?.value||'수학').trim();
+  box.innerHTML='<span class="muted">불러오는 중…</span>';
+  try{
+    const d=await (await fetch('/api/local-hub?region='+encodeURIComponent(region)+'&subject='+encodeURIComponent(subject))).json();
+    let s='';
+    if(d.academies&&d.academies.length){
+      s+=`<div class="gt" style="margin:6px 0">실제 학원 <span class="muted">${d.live?'· 실시간':'· 스냅샷'}</span></div>`;
+      d.academies.forEach(a=>{ s+=`<div class="aca"><div class="top"><span class="nm">${esc(a.name)}</span>
+        <a class="lnk" href="${esc(a.map_url)}" target="_blank" rel="noopener">지도</a></div>
+        <div class="meta">${esc(a.category||'')}${a.address?' · '+esc(a.address):''}</div>
+        ${a.url?`<a class="lnk" href="${esc(a.url)}" target="_blank" rel="noopener">홈페이지·블로그</a>`:''}</div>`; });
+    } else {
+      s+=`<div class="muted">수집된 학원이 아직 없어요. 아래 지도·맘카페로 실시간 확인하세요.</div>`;
+    }
+    s+=`<div class="gt" style="margin:10px 0 4px">지도에서 보기</div><div class="chips">`
+      + d.map_links.map(l=>`<a class="chip pri" style="text-decoration:none" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('')+`</div>`;
+    s+=`<div class="gt" style="margin:10px 0 4px">엄마들 후기·커뮤니티</div><div class="chips">`
+      + d.community_links.map(l=>`<a class="chip" style="text-decoration:none" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('')+`</div>`;
+    s+=`<div class="src">출처: ${esc(d.source)} · ${esc(d.note)}</div>`;
+    box.innerHTML=s;
+  }catch(e){ box.innerHTML='<span class="muted">불러오지 못했어요.</span>'; }
+}
+
+// 엄마들 인앱 커뮤니티 (의견 나누기)
+const COMM_TOPICS=['전체','수학학원','영어','유아영어','사고력','예체능','진로','자유'];
+function commCardShell(){
+  const opts=COMM_TOPICS.map(t=>`<option>${t}</option>`).join('');
+  return `<div class="card"><h3>💬 엄마들 커뮤니티</h3>
+    <p class="hint">같은 지역·주제의 부모들과 정보를 나누고 의견을 남겨요.</p>
+    <div class="rvform">
+      <input class="txt" id="cmRegion" maxlength="30" placeholder="지역 (예: 서울 노원 중계동)" value="${esc(defRegion())}" />
+      <select id="cmTopic">${opts}</select>
+      <button onclick="loadCommunity()">보기</button></div>
+    <div id="cmList"><span class="muted">불러오는 중…</span></div>
+    <div class="rvbox" style="display:block;border-top:1px solid var(--line);margin-top:10px">
+      <div class="gt" style="margin:2px 0 6px">✏️ 새 글 쓰기</div>
+      <input id="cmNewTitle" maxlength="80" placeholder="제목" style="margin-bottom:6px" />
+      <textarea id="cmNewBody" maxlength="1000" placeholder="내용을 적어주세요 (상업/비방/개인정보 금지)" style="width:100%;min-height:64px;padding:10px;border:1.5px solid var(--line);border-radius:11px;font-size:14px;font-family:inherit"></textarea>
+      <div class="rvform" style="margin-top:6px">
+        <input id="cmNewAuthor" style="max-width:110px" maxlength="20" placeholder="별명(선택)" />
+        <button onclick="submitPost()">등록</button></div>
+    </div></div>`;
+}
+async function loadCommunity(){
+  const box=$('#cmList'); if(!box) return;
+  const region=($('#cmRegion')?.value||'').trim(), topic=($('#cmTopic')?.value||'').trim();
+  box.innerHTML='<span class="muted">불러오는 중…</span>';
+  try{
+    const d=await (await fetch('/api/community?region='+encodeURIComponent(region)+'&topic='+encodeURIComponent(topic))).json();
+    if(!d.posts.length){ box.innerHTML='<span class="muted">아직 글이 없어요. 첫 글을 남겨보세요!</span>'; return; }
+    box.innerHTML=d.posts.map(p=>postHTML(p)).join('')
+      + `<div class="src">${esc(d.note)}</div>`;
+  }catch(e){ box.innerHTML='<span class="muted">불러오지 못했어요.</span>'; }
+}
+function postHTML(p){
+  const cmts=(p.comments||[]).map(c=>`<div class="rv"><span class="rh">${esc(c.author)}</span> <span class="muted">${esc(c.date)}</span><br>${esc(c.text)}</div>`).join('');
+  return `<div class="aca"><div class="top"><span class="nm">${esc(p.title)}</span>
+      <span class="tag">${esc(p.topic)}</span></div>
+    <div class="meta">${esc(p.author)} · ${esc(p.region)} · ${esc(p.date)}</div>
+    <div style="font-size:13px;margin:6px 0;white-space:pre-wrap">${esc(p.body)}</div>
+    <div class="chips"><button class="chip" style="cursor:pointer;border:none" onclick="likePost('${esc(p.id)}',this)">🤍 공감 ${p.likes}</button>
+      <span class="muted" style="align-self:center">💬 ${(p.comments||[]).length}</span></div>
+    <div class="rvbox" style="display:block">${cmts}
+      <div class="rvform"><input class="txt" id="cmc-${esc(p.id)}" maxlength="300" placeholder="의견 달기" />
+        <input id="cmca-${esc(p.id)}" style="max-width:90px" maxlength="20" placeholder="별명" />
+        <button onclick="submitComment('${esc(p.id)}')">등록</button></div></div></div>`;
+}
+async function submitPost(){
+  const region=($('#cmRegion')?.value||'').trim()||'전체';
+  const topic=($('#cmTopic')?.value||'자유').trim();
+  const title=($('#cmNewTitle')?.value||'').trim(), body=($('#cmNewBody')?.value||'').trim();
+  if(!title||!body){ alert('제목과 내용을 입력하세요.'); return; }
+  const author=($('#cmNewAuthor')?.value||'').trim()||'익명맘';
+  try{
+    await fetch('/api/community',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({region,topic:topic==='전체'?'자유':topic,title,body,author})});
+    $('#cmNewTitle').value=''; $('#cmNewBody').value='';
+    loadCommunity();
+  }catch(e){ alert('등록에 실패했어요.'); }
+}
+async function submitComment(id){
+  const text=($('#cmc-'+id)?.value||'').trim(); if(!text){ alert('의견을 입력하세요.'); return; }
+  const author=($('#cmca-'+id)?.value||'').trim()||'익명맘';
+  try{ await fetch('/api/community/'+id+'/comment',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({author,text})}); loadCommunity();
+  }catch(e){ alert('등록에 실패했어요.'); }
+}
+async function likePost(id,btn){
+  try{ const r=await (await fetch('/api/community/'+id+'/like',{method:'POST'})).json();
+    if(r.ok&&btn) btn.textContent='💛 공감 '+r.likes;
+  }catch(e){}
+}
+
 // 마인드맵
 function mindmap(pw){
   const ms=pw.milestones, n=ms.length;
@@ -656,6 +763,7 @@ async function showResult(){
     post('/api/grade-plan'),post('/api/units'),post('/api/plan'),post('/api/achievement'),post('/api/recommend'),
     post('/api/pathway'),post('/api/subjects'),post('/api/ai-track'),post('/api/careers'),
     post('/api/lifecycle'),post('/api/academies'),post('/api/persona'),post('/api/techtree')]);
+  state.weakSubject = (achv.weak && achv.weak.length) ? achv.weak[0].subject : (state.coreSubjects[0]||'수학');
   saveHistory(plan.grade); saveProfile(plan.grade); saveSync();
   render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,tt); setStep(3);
 }
@@ -696,6 +804,9 @@ function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,
   h+=`</div>`;
   // 2.5) 추천 학원 (필요한 사교육)
   h+=academiesHTML(aca);
+  // 2.6) 우리 동네 실제 학원 · 지도 · 맘카페  +  2.7) 엄마들 커뮤니티
+  h+=localCardShell();
+  h+=commCardShell();
   // 3) AI 시대 역량
   h+=`<div class="card"><h3>🤖 AI 시대 역량 — ${ai.stage}</h3><div style="font-weight:700;font-size:14px">${ai.headline}</div>
     <ul class="glist">${ai.skills.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
@@ -723,6 +834,7 @@ function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,
       +list.map(s=>`<span class="subj">${esc(s.name)}</span>`).join('')+`</div>`; });
   h+=`</div>`;
   $('#result').innerHTML=h;
+  loadLocalHub(); loadCommunity();
 }
 
 // 이벤트

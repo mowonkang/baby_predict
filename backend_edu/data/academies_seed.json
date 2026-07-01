@@ -1,0 +1,18 @@
+{
+  "_source": "네이버 지역검색(공개) 스냅샷 · 2026-07 수집. 학원명·주소는 공개 정보이며 추천/평가가 아닙니다.",
+  "_note": "실시간 데이터는 NAVER_CLIENT_ID/SECRET 환경변수를 설정하면 네이버 지역검색 API로 조회됩니다(local.py). 미설정 시 이 스냅샷을 사용합니다.",
+  "items": [
+    {"region": "서울 노원 중계동", "subject": "수학", "name": "더원학원 중계점", "category": "수학교육", "address": "서울 노원구 한글비석로 359 의암빌딩", "url": "https://blog.naver.com/the_one_math"},
+    {"region": "서울 노원 중계동", "subject": "수학", "name": "짱솔학원 중계점", "category": "수학교육", "address": "서울 노원구 한글비석로 264 그랜드프라자 4층", "url": "http://www.zzangsol.co.kr/"},
+    {"region": "서울 노원 중계동", "subject": "수학", "name": "대치메이드학원 중계점", "category": "수학교육", "address": "서울 노원구 한글비석로 264 중계그랜드프라자 405호", "url": "https://made.madeedu.co.kr/"},
+    {"region": "서울 노원 중계동", "subject": "수학", "name": "시매쓰 중계점", "category": "사고력수학", "address": "서울 노원구 한글비석로 273 대웅빌딩 201호", "url": "https://blog.naver.com/cmathjkl"},
+    {"region": "서울 강남 대치동", "subject": "영어", "name": "함영원영어학원", "category": "영어교육", "address": "서울 강남구 남부순환로 2937", "url": "https://www.youtube.com/@함영원영어학원"},
+    {"region": "서울 강남 대치동", "subject": "영어", "name": "삼보어학원", "category": "영어교육", "address": "서울 강남구 남부순환로 2911-1 성보2빌딩 3~5층", "url": "http://www.samboh.co.kr"},
+    {"region": "서울 강남 대치동", "subject": "영어", "name": "DYB최선어학원 대치 본원", "category": "영어교육", "address": "서울 강남구 남부순환로 2917 청실종합상가 4층", "url": "https://www.choisun.co.kr/"},
+    {"region": "서울 강남 대치동", "subject": "영어", "name": "정영어학원", "category": "영어교육", "address": "서울 강남구 남부순환로 2941 대치탑프라자 3~4층", "url": "https://blog.naver.com/kijungnam"},
+    {"region": "서울 양천 목동", "subject": "수학", "name": "백인대장 중등관", "category": "수학교육", "address": "서울 양천구 목동동로 401 2층", "url": "https://www.e100in.com/"},
+    {"region": "서울 양천 목동", "subject": "수학", "name": "아드폰테스 수학과학 초등본관", "category": "수학교육", "address": "서울 양천구 목동중앙로 73 4층", "url": "https://blog.naver.com/adfontes_math"},
+    {"region": "서울 양천 목동", "subject": "수학", "name": "CMS 목동영재관", "category": "영재수학", "address": "서울 양천구 목동서로 133 W빌딩 6~7층", "url": "https://blog.naver.com/cmsedumdy"},
+    {"region": "서울 양천 목동", "subject": "수학", "name": "수학도서관", "category": "수학교육", "address": "서울 양천구 목동동로 391 현대파크빌 2층", "url": "https://blog.naver.com/mathlibrary_"}
+  ]
+}

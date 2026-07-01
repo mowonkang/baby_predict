@@ -452,3 +452,70 @@ class ExtracurricularOption(BaseModel):
 class ExtracurricularOptionsResponse(BaseModel):
     categories: list[str]
     options: list[ExtracurricularOption]
+
+
+# ── 지역 허브: 실제 학원·지도·맘카페 연동 ──────────────────────────
+class LocalLink(BaseModel):
+    label: str
+    url: str
+    kind: str   # map / community / search
+
+
+class LiveAcademy(BaseModel):
+    name: str
+    category: str = ""
+    address: str = ""
+    url: str = ""
+    map_url: str = ""   # 지도에서 열기(카카오맵 검색 딥링크)
+
+
+class LocalHubResponse(BaseModel):
+    """지역·과목 기반 실제 학원 + 지도 + 맘카페 커뮤니티 연동 허브."""
+
+    region: str
+    subject: str
+    academies: list[LiveAcademy]     # 실데이터(라이브 API 또는 스냅샷)
+    map_links: list[LocalLink]       # 카카오맵·네이버지도 딥링크
+    community_links: list[LocalLink]  # 맘카페·후기 검색 딥링크
+    live: bool = False               # 라이브 API로 조회했는지(아니면 스냅샷)
+    source: str = ""
+    note: str = ""
+
+
+# ── 인앱 커뮤니티(엄마들 의견 나누기) ───────────────────────────
+class CommunityComment(BaseModel):
+    author: str = "익명맘"
+    text: str
+    date: str = ""
+
+
+class CommunityPost(BaseModel):
+    id: str
+    region: str
+    topic: str          # 예: "수학학원", "유아영어", "자유"
+    title: str
+    body: str
+    author: str = "익명맘"
+    date: str = ""
+    likes: int = 0
+    comments: list[CommunityComment] = Field(default_factory=list)
+
+
+class CommunityListResponse(BaseModel):
+    region: str
+    topic: str
+    posts: list[CommunityPost]
+    note: str = "인앱 커뮤니티는 참여자 작성 글입니다. 상업/비방/개인정보 글은 신고해 주세요."
+
+
+class CommunityPostSubmit(BaseModel):
+    region: str = Field(..., min_length=1, max_length=40)
+    topic: str = Field("자유", max_length=30)
+    title: str = Field(..., min_length=1, max_length=80)
+    body: str = Field(..., min_length=1, max_length=1000)
+    author: str = Field("익명맘", max_length=20)
+
+
+class CommunityCommentSubmit(BaseModel):
+    author: str = Field("익명맘", max_length=20)
+    text: str = Field(..., min_length=1, max_length=500)

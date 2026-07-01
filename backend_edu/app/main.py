@@ -40,12 +40,19 @@ from .report import build_report
 from .stats import build_stats
 from .techtree import build_techtree
 from .extracurricular import CATEGORIES, EXTRACURRICULARS
+from .local import build_local_hub
+from . import community
 from .models import (
     AchievementResponse,
     AiTrackResponse,
     CareersResponse,
+    CommunityCommentSubmit,
+    CommunityListResponse,
+    CommunityPost,
+    CommunityPostSubmit,
     ExtracurricularOption,
     ExtracurricularOptionsResponse,
+    LocalHubResponse,
     StatProfile,
     TechTreeResponse,
     GradePlanResponse,
@@ -212,6 +219,41 @@ def get_extracurriculars() -> ExtracurricularOptionsResponse:
 def post_stats(profile: StudentProfile) -> StatProfile:
     """능력치 스탯(8각형 레이더) — 관심·경험·성취를 규칙으로 합산(무과금)."""
     return build_stats(profile)
+
+
+@app.get("/api/local-hub", response_model=LocalHubResponse)
+def get_local_hub(region: str = "", subject: str = "수학") -> LocalHubResponse:
+    """지역·과목 → 실제 학원 목록 + 지도(카카오/네이버) + 맘카페 커뮤니티 딥링크."""
+    return build_local_hub(region, subject)
+
+
+@app.get("/api/community", response_model=CommunityListResponse)
+def get_community(region: str = "", topic: str = "") -> CommunityListResponse:
+    """지역·주제별 인앱 커뮤니티 글 목록(엄마들 의견 나누기)."""
+    return community.list_posts(region, topic)
+
+
+@app.post("/api/community", response_model=CommunityPost)
+def post_community(body: CommunityPostSubmit) -> CommunityPost:
+    """커뮤니티 글 작성."""
+    return community.create_post(body.region, body.topic, body.title, body.body, body.author)
+
+
+@app.post("/api/community/{post_id}/comment")
+def post_community_comment(post_id: str, body: CommunityCommentSubmit) -> dict:
+    """커뮤니티 글에 댓글(의견) 작성."""
+    if not community.add_comment(post_id, body.author, body.text):
+        raise HTTPException(status_code=404, detail="글을 찾을 수 없습니다.")
+    return {"ok": True}
+
+
+@app.post("/api/community/{post_id}/like")
+def post_community_like(post_id: str) -> dict:
+    """커뮤니티 글 공감(좋아요)."""
+    likes = community.like_post(post_id)
+    if likes is None:
+        raise HTTPException(status_code=404, detail="글을 찾을 수 없습니다.")
+    return {"ok": True, "likes": likes}
 
 
 @app.post("/api/techtree", response_model=TechTreeResponse)
