@@ -48,12 +48,19 @@
     .opt.sel{ border-color:var(--pri); background:#f1eeff; color:var(--pri-d); font-weight:700; }
     /* 성취도 입력 */
     .subj-row{ display:flex; align-items:center; gap:8px; margin:8px 0; }
-    .subj-row .nm{ width:54px; font-weight:700; font-size:13.5px; }
-    .lvls{ display:flex; gap:6px; flex:1; }
-    .lvls button{ flex:1; padding:9px 0; border:1.5px solid var(--line); background:#fff; border-radius:9px; font-size:12.5px; cursor:pointer; color:var(--muted); }
-    .lvls button.good.sel{ background:var(--ok); color:#fff; border-color:var(--ok); }
-    .lvls button.ok.sel{ background:#f6b93b; color:#fff; border-color:#f6b93b; }
-    .lvls button.weak.sel{ background:var(--warn); color:#fff; border-color:var(--warn); }
+    .subj-row{ display:block; margin:12px 0; }
+    .subj-row .nm{ display:block; font-weight:700; font-size:13.5px; margin-bottom:6px; }
+    .subj-row .nm small{ font-weight:500; color:var(--muted); font-size:11px; }
+    .lvls{ display:flex; gap:5px; }
+    .lvls button{ flex:1; padding:7px 2px; border:1.5px solid var(--line); background:#fff; border-radius:9px; cursor:pointer; color:var(--muted); line-height:1.25; }
+    .lvls button b{ display:block; font-size:11.5px; font-weight:700; color:#3a3550; }
+    .lvls button small{ display:block; font-size:9.5px; color:var(--muted); }
+    /* 또래 대비 상대 위치: 상위=초록 · 평균=보라 · 하위=주황 */
+    .lvls button.l0.sel,.lvls button.l1.sel{ background:var(--ok); border-color:var(--ok); }
+    .lvls button.l2.sel{ background:var(--pri); border-color:var(--pri); }
+    .lvls button.l3.sel,.lvls button.l4.sel{ background:var(--warn); border-color:var(--warn); }
+    .lvls button.sel b,.lvls button.sel small{ color:#fff; }
+    .lvls button.sel small{ opacity:.85; }
     /* 결과 */
     .chips{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
     .chip{ font-size:12px; background:#f0effb; color:#444; padding:4px 10px; border-radius:11px; }
@@ -136,7 +143,7 @@
     .cogq{ margin:10px 0; }
     .cogq .qq{ font-size:13px; margin-bottom:5px; }
     .cogq .freq{ display:flex; gap:6px; }
-    .cogq .freq button{ flex:1; padding:8px 0; border:1.5px solid var(--line); background:#fff; border-radius:9px; font-size:11px; color:var(--muted); cursor:pointer; }
+    .cogq .freq button{ flex:1; padding:8px 2px; border:1.5px solid var(--line); background:#fff; border-radius:9px; font-size:10px; line-height:1.2; color:var(--muted); cursor:pointer; }
     .cogq .freq button.sel{ background:var(--pri); color:#fff; border-color:var(--pri); font-weight:700; }
     /* 인지 프로파일(결과) */
     .cogrow{ display:flex; align-items:center; gap:8px; margin:5px 0; font-size:12px; }
@@ -227,7 +234,7 @@
     <section id="screen2" class="screen">
       <div class="card">
         <h2>과목별 현재 수준</h2>
-        <p class="hint">시험 점수가 없어도 느낌으로 OK. 부족한 과목엔 무료·저렴 교육을 추천해 드려요.</p>
+        <p class="hint"><b>또래 평균 대비</b> 상대 위치로 선택하세요(상위10%~하위10%). 시험 점수가 없어도 대략의 위치로 OK. 미니 진단을 하면 실제 백분위로 자동 채워집니다.</p>
         <div id="achv"></div>
         <label for="weeklyHours" style="margin-top:12px">주당 학습 가능 시간 (선택)</label>
         <input id="weeklyHours" type="number" min="0" max="60" placeholder="예: 8 (비우면 학년 기본값으로 배분)" />
@@ -241,7 +248,7 @@
       </div>
       <div class="card">
         <h3>🧠 아이 행동 관찰 (성향 파악)</h3>
-        <p class="hint">아이 성향을 몰라도 OK. <b>관찰되는 행동</b>에 빈도로 답하면 5영역(웩슬러 착안) 강·약점을 추정해요. <span class="muted">임상 검사·진단 아님</span></p>
+        <p class="hint">아이 성향을 몰라도 OK. 각 행동을 <b>또래 아이와 비교</b>해 골라주세요 → 5영역(웩슬러 착안) 상대 강·약점을 추정해요. <span class="muted">임상 검사·진단 아님</span></p>
         <div id="cogQuiz"><span class="muted">불러오는 중…</span></div>
       </div>
       <div class="card">
@@ -277,7 +284,9 @@ const TYPE_LABEL={ national_pick:'인기', aptitude_match:'적성맞춤', stage_
 const RIASEC={ realistic:'현실형 R', investigative:'탐구형 I', artistic:'예술형 A', social:'사회형 S', enterprising:'진취형 E', conventional:'관습형 C' };
 const AGES=[ {v:1,t:'영아',s:'0~2세'},{v:5,t:'유치원',s:'4~6세'},{v:8,t:'초등 저',s:'1~2학년'},{v:10,t:'초등 중',s:'3~4학년'},
   {v:12,t:'초등 고',s:'5~6학년'},{v:14,t:'중학생',s:'중1~3'},{v:17,t:'고등학생',s:'고1~3'} ];
-const LVLS=[['good','잘함'],['ok','보통'],['weak','부족']];
+// 또래 대비 상대 비교 5단계(측정형): [라벨, 앵커]
+const LVLS=[['최상위','상위 10%'],['우수','상위 30%'],['평균','또래 평균'],['부족','하위 30%'],['매우 부족','하위 10%']];
+const pctToBand=p=>p>=85?'최상위':p>=60?'우수':p>=40?'평균':p>=15?'부족':'매우 부족';
 
 function setStep(n){
   ['screen0','screen1','screen2','screen3'].forEach((id,i)=>$('#'+id).classList.toggle('active',i===n));
@@ -334,16 +343,23 @@ async function loadPlan(){
 }
 
 // 2 성취도 + 관심사
+// 또래 대비 5단계 버튼 묶음(측정형) — 선택 시 state[key][id]=라벨
+function lvlButtons(box, cur, onPick){
+  LVLS.forEach(([lbl,anc],i)=>{
+    const b=document.createElement('button'); b.type='button'; b.className='l'+i;
+    b.innerHTML=`<b>${lbl}</b><small>${anc}</small>`;
+    if(cur===lbl) b.classList.add('sel');
+    b.onclick=()=>{ [...box.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); onPick(lbl); };
+    box.appendChild(b);
+  });
+}
 function renderAchv(){
   const wrap=$('#achv'); wrap.innerHTML='';
   state.coreSubjects.forEach(subj=>{
     const row=document.createElement('div'); row.className='subj-row';
-    row.innerHTML=`<div class="nm">${subj}</div>`;
+    row.innerHTML=`<div class="nm">${esc(subj)} <small>또래 대비</small></div>`;
     const box=document.createElement('div'); box.className='lvls';
-    LVLS.forEach(([k,lbl])=>{ const b=document.createElement('button'); b.className=k; b.textContent=lbl;
-      if(state.achievements[subj]===lbl) b.classList.add('sel');  // 진단/기존 반영
-      b.onclick=()=>{ state.achievements[subj]=lbl; [...box.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); };
-      box.appendChild(b); });
+    lvlButtons(box, state.achievements[subj], lbl=>{ state.achievements[subj]=lbl; });
     row.appendChild(box); wrap.appendChild(row);
   });
 }
@@ -369,24 +385,25 @@ async function loadCognitive(){
     b.onclick=()=>{ fr.querySelectorAll('button').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
       state.behaviors[fr.dataset.item]=parseInt(b.dataset.v,10); }; }); });
 }
-// 과목 하위 스킬 상세(선택)
+// 과목 하위 스킬 상세(선택) — 나이에 맞는 과목만, 또래 대비 5단계
 async function loadSubskills(){
-  const box=$('#subskillBox'); if(!box) return;
-  const d=await (await fetch('/api/subskills')).json();
+  const box=$('#subskillBox'); const card=box&&box.closest('.card'); if(!box) return;
+  const d=await (await fetch('/api/subskills?age='+(state.age||''))).json();
+  if(!d.items.length){ if(card) card.style.display='none'; return; }
+  if(card) card.style.display='';
   const byS={}; d.items.forEach(o=>{ (byS[o.subject]=byS[o.subject]||[]).push(o); });
-  let s='';
+  box.innerHTML='';
   Object.entries(byS).forEach(([subj,list])=>{
-    s+=`<div style="font-size:12.5px;font-weight:800;color:var(--muted);margin:8px 0 4px">${esc(subj)}</div>`;
+    const h=document.createElement('div'); h.style.cssText='font-size:12.5px;font-weight:800;color:var(--muted);margin:10px 0 4px'; h.textContent=subj;
+    box.appendChild(h);
     list.forEach(o=>{
-      s+=`<div class="subj-row"><div class="nm" style="width:auto;min-width:64px" title="${esc(o.desc)}">${esc(o.name)}</div><div class="lvls" data-sub="${esc(o.id)}">`;
-      LVLS.forEach(([k,lbl])=>{ s+=`<button type="button" class="${k}${state.subskills[o.id]===lbl?' sel':''}">${lbl}</button>`; });
-      s+=`</div></div>`;
+      const row=document.createElement('div'); row.className='subj-row';
+      row.innerHTML=`<div class="nm" title="${esc(o.desc)}">${esc(o.name)} <small>${esc(o.desc)}</small></div>`;
+      const lb=document.createElement('div'); lb.className='lvls';
+      lvlButtons(lb, state.subskills[o.id], lbl=>{ state.subskills[o.id]=lbl; });
+      row.appendChild(lb); box.appendChild(row);
     });
   });
-  box.innerHTML=s;
-  box.querySelectorAll('.lvls').forEach(lv=>{ lv.querySelectorAll('button').forEach(b=>{
-    b.onclick=()=>{ lv.querySelectorAll('button').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
-      state.subskills[lv.dataset.sub]=b.textContent; }; }); });
 }
 async function loadExtracurriculars(){
   const data=await (await fetch('/api/extracurriculars')).json();
@@ -425,8 +442,8 @@ async function gradeDiagnostic(){
   const m=await (await fetch('/api/mastery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({answers:chosen})})).json();
   state.diagDone=true;
   let s='<div class="mode" style="background:#6c5ce7;margin-top:6px">✅ 진단 반영됨</div>';
-  m.subjects.forEach(su=>{ state.achievements[su.subject]=su.level;
-    s+=`<div class="opt-line">${esc(su.subject)} 숙련 <b>${Math.round(su.mastery*100)}%</b>(${esc(su.level)}) · 또래 백분위 ~${su.percentile} · 적정난이도 ${esc(su.recommended_difficulty)} · 복습 <b>D-${su.review_in_days}</b></div>`; });
+  m.subjects.forEach(su=>{ state.achievements[su.subject]=pctToBand(su.percentile);
+    s+=`<div class="opt-line">${esc(su.subject)} 숙련 <b>${Math.round(su.mastery*100)}%</b> · 또래 백분위 <b>~${su.percentile}</b> → ${esc(pctToBand(su.percentile))} · 복습 <b>D-${su.review_in_days}</b></div>`; });
   $('#diagResult').innerHTML=s;
   renderAchv();  // 성취도 버튼에 반영
 }

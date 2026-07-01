@@ -15,11 +15,10 @@ from .models import EduOption, StudentProfile, StudyPlanResponse, StudySession
 # 학교급별 기본 주당 학습시간(자기학습 기준, 예시)
 _DEFAULT_HOURS = {"영아": 0, "유아": 3, "초등": 6, "중등": 9, "고등": 12}
 
-# 레벨 가중치(시간 배분) · 입력 정규화
+from . import levels
+
+# 레벨 가중치(시간 배분)
 _WEIGHT = {"부족": 3.0, "보통": 2.0, "잘함": 1.0, "기본": 2.0}
-_NORM = {"부족": "부족", "하": "부족", "weak": "부족",
-         "보통": "보통", "중": "보통", "ok": "보통",
-         "잘함": "잘함", "상": "잘함", "good": "잘함"}
 
 _ACADEMIC_ACTION = {
     "부족": ("기초 개념부터 — 쉬운 단원 영상 보고 따라 풀기", "핵심 개념 1개 확실히 이해하기"),
@@ -38,7 +37,7 @@ _DEV_ACTION = {
 
 
 def _norm(level: str) -> str:
-    return _NORM.get(str(level).strip(), "보통")
+    return levels.coarse(level)
 
 
 def build_plan(profile: StudentProfile) -> StudyPlanResponse:

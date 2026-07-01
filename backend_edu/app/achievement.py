@@ -12,12 +12,7 @@ from .catalog import CATALOG
 from .grades import grade_for_age
 from .models import AchievementResponse, EduOption, SubjectPlan
 
-# 입력 레벨 정규화
-_LEVEL = {
-    "잘함": "good", "상": "good", "good": "good",
-    "보통": "ok", "중": "ok", "ok": "ok",
-    "부족": "weak", "하": "weak", "weak": "weak",
-}
+from . import levels
 
 _ACTION = {
     "weak": "기초 개념부터 다시 — 진도보다 '구멍 메우기'를 우선하세요.",
@@ -96,7 +91,7 @@ def build_achievement(age_years: int, achievements: dict[str, str],
     weak: list[SubjectPlan] = []
     strong: list[str] = []
     for subject, raw in achievements.items():
-        level = _LEVEL.get(str(raw).strip(), "ok")
+        level = levels.bucket(raw)
         if level == "good":
             strong.append(subject)
             continue
