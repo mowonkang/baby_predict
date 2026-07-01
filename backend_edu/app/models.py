@@ -81,6 +81,8 @@ class StudentProfile(BaseModel):
     achievements: dict[str, str] = Field(default_factory=dict)
     # 주당 학습 가능 시간(시간). 없으면 학교급 기본값 사용
     weekly_hours: Optional[int] = Field(None, ge=0, le=80)
+    # 경험했거나 관심 있는 사교육·활동 옵션 id(몬테소리·영어·태권도 등) — 능력치·테크트리용
+    activities: list[str] = Field(default_factory=list, description="선택한 사교육·활동 경험/관심 옵션 id")
 
 
 class RecommendationType(str, Enum):
@@ -374,3 +376,73 @@ class LifecycleStage(BaseModel):
 class LifecycleResponse(BaseModel):
     current_label: str
     stages: list[LifecycleStage]
+
+
+# ── 육성 엔진(프린세스 메이커식): 능력치 스탯 + 사교육 테크트리 ──────────
+class StatAxis(BaseModel):
+    """능력치 1축 (게임처럼 0~100)."""
+
+    key: str          # language / logic / science ...
+    label: str        # 언어 / 수리·논리 ...
+    value: int = Field(..., ge=0, le=100)
+    level: str        # 새싹 / 성장 / 우수 / 탁월
+    top: bool = False  # 상위(강점) 축 여부
+
+
+class StatProfile(BaseModel):
+    """8각형 능력치 프로필 (레이더 차트용)."""
+
+    axes: list[StatAxis]
+    top_axes: list[str]        # 강점 축 라벨(상위 2~3)
+    growth_axes: list[str]     # 보강 축 라벨(하위 1~2)
+    headline: str              # 한 줄 요약(예: "탐구·언어형 새싹")
+    note: str = "입력(관심활동·경험·성취)을 규칙 기반으로 합산한 참고용 능력치 — LLM 호출 없음."
+    source_signals: list[str] = Field(default_factory=list)  # 어떤 입력이 반영됐는지
+
+
+class TechNode(BaseModel):
+    """테크트리 노드 = 하나의 사교육/활동 단계 (스타크래프트 테크 유닛처럼)."""
+
+    id: str
+    label: str
+    tier: int              # 0=유아, 1=초등, 2=중등, 3=고등/진로
+    age_hint: str          # "5~7세" 등
+    stat: str              # 주로 키우는 능력치 key
+    requires: list[str] = Field(default_factory=list)  # 선행 노드 id
+    cost_band: str = "중"   # 대략 비용대(무료/저/중/고)
+    free_alt: str = ""     # 무료·저가 대안 한 줄
+    recommended: bool = False  # 추천 루트에 포함?
+    reason: str = ""       # 추천 이유(추천 노드일 때)
+
+
+class TechTrack(BaseModel):
+    """능력치 계열별 테크트리(어학·사고력·예술·체육·기초인성 등)."""
+
+    key: str
+    label: str
+    stat: str              # 이 트랙이 키우는 대표 능력치 key
+    nodes: list[TechNode]  # tier 순 정렬
+    recommended: bool = False  # 이 트랙 자체가 추천 계열인지
+
+
+class TechTreeResponse(BaseModel):
+    """사교육 전체 테크트리 + 추천 루트."""
+
+    stat: StatProfile
+    tracks: list[TechTrack]        # 전체 계열 트리
+    route: list[TechNode]          # 추천 루트(현재 나이 기준 다음 스텝, tier 순)
+    recommended_tracks: list[str]  # 강점 기반 추천 계열 라벨
+    note: str = "능력치·나이·관심을 규칙으로 매칭한 추천 루트 — 예시 포함, LLM 호출 없음."
+
+
+class ExtracurricularOption(BaseModel):
+    """쉬운 입력용 사교육/활동 선택지."""
+
+    id: str
+    label: str
+    category: str   # 어학 / 사고력 / 예술 / 체육 / 기초·인성
+
+
+class ExtracurricularOptionsResponse(BaseModel):
+    categories: list[str]
+    options: list[ExtracurricularOption]

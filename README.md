@@ -60,6 +60,7 @@ pytest -q                       # 테스트 17건
 | [docs/edu/무료저가자원.md](docs/edu/무료저가자원.md) | 무료·저가 교육 자원 실제 링크 |
 | [docs/edu/벤치마킹.md](docs/edu/벤치마킹.md) | 경쟁 플랫폼 벤치마킹 + 진화 로드맵 |
 | [docs/edu/성장성_및_예측모델.md](docs/edu/성장성_및_예측모델.md) | SWOT·성장성 + 페르소나 기반 예측모델(BKT/IRT, 무과금) 설계 |
+| [docs/edu/육성엔진_설계.md](docs/edu/육성엔진_설계.md) | 능력치 스탯(8각) + 사교육 테크트리·추천 루트(프린세스메이커식, 무과금) 설계 |
 | [docs/edu/데이터소스.md](docs/edu/데이터소스.md) | 교육 외부 데이터 소스 |
 
 ### MVP (코드 + 앱)
@@ -72,7 +73,7 @@ pytest -q                       # 테스트 17건
 ```bash
 cd backend_edu && pip install -r requirements.txt
 uvicorn app.main:app --reload   # 앱: http://localhost:8000/
-pytest -q                       # 테스트 117건
+pytest -q                       # 테스트 125건
 ```
 
 자세한 내용은 [backend_edu/README.md](backend_edu/README.md) 참조.

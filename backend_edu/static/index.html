@@ -100,6 +100,36 @@
     .rvform select,.rvform input{ padding:7px; border:1px solid var(--line); border-radius:8px; font-size:12.5px; }
     .rvform input.txt{ flex:1; min-width:140px; }
     .rvform button{ padding:7px 12px; border:none; background:var(--pri); color:#fff; border-radius:8px; font-weight:700; cursor:pointer; font-size:12.5px; }
+    /* 육성 엔진: 능력치 레이더 + 테크트리 */
+    .statwrap{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    svg.radar{ width:210px; height:210px; flex:none; display:block; margin:0 auto; }
+    .statlist{ flex:1; min-width:150px; }
+    .statrow{ display:flex; align-items:center; gap:8px; margin:4px 0; font-size:12px; }
+    .statrow span{ width:56px; color:var(--muted); }
+    .statrow.top span{ color:var(--pri-d); font-weight:800; }
+    .statbar{ flex:1; height:7px; background:#ece9f8; border-radius:5px; overflow:hidden; }
+    .statbar > i{ display:block; height:100%; background:var(--pri); }
+    .statrow.top .statbar > i{ background:var(--ok); }
+    .statrow b{ width:26px; text-align:right; font-size:11px; }
+    .tt{ overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:6px; }
+    .ttrack{ display:flex; align-items:stretch; gap:0; margin:8px 0; }
+    .ttrack .tlabel{ width:78px; flex:none; font-size:12px; font-weight:800; display:flex; align-items:center;
+      padding-right:6px; color:#3a3550; }
+    .ttrack.rec .tlabel{ color:var(--pri-d); }
+    .tnodes{ display:flex; align-items:center; gap:0; }
+    .tnode{ position:relative; width:118px; flex:none; border:1.5px solid var(--line); background:#fbfbff; border-radius:10px;
+      padding:7px 8px; font-size:11px; line-height:1.28; }
+    .tnode + .tnode{ margin-left:16px; }
+    .tnode + .tnode::before{ content:"→"; position:absolute; left:-15px; top:50%; transform:translateY(-50%); color:#c7c3e0; font-size:13px; }
+    .tnode.on{ border-color:var(--ok); background:#eefaf5; box-shadow:0 0 0 2px #c7f0e3; }
+    .tnode .tn{ font-weight:700; color:#2a2740; }
+    .tnode .ta{ color:var(--muted); font-size:10px; margin-top:2px; }
+    .tnode .tfree{ color:var(--free); font-size:10px; margin-top:2px; }
+    .tnode .rbadge{ position:absolute; top:-8px; right:-6px; background:var(--ok); color:#fff; font-size:9px;
+      font-weight:800; padding:1px 6px; border-radius:8px; }
+    .routebox{ background:#f1eeff; border-radius:11px; padding:10px 12px; margin-top:8px; }
+    .routebox .rstep{ font-size:12.5px; margin:4px 0; }
+    .routebox .rstep b{ color:var(--pri-d); }
   </style>
 </head>
 <body>
@@ -159,6 +189,11 @@
         <h3 style="margin-top:14px">학습 성향 (해당되면)</h3>
         <div class="opts" id="styOpts"></div>
       </div>
+      <div class="card">
+        <h3>🧩 해봤거나 관심 있는 사교육·활동</h3>
+        <p class="hint">몬테소리·영어·태권도·미술·피아노… 탭으로 고르면 <b>능력치</b>와 <b>사교육 테크트리 루트</b>에 반영돼요.</p>
+        <div id="exOpts"></div>
+      </div>
       <div class="cta">
         <button class="btn" id="toResult">결과 보기 →</button>
         <button class="btn ghost" id="back1">← 이전</button>
@@ -174,7 +209,7 @@
 </div>
 
 <script>
-const state={ age:null, name:'', coreSubjects:[], achievements:{}, picks:new Set() };
+const state={ age:null, name:'', coreSubjects:[], achievements:{}, picks:new Set(), activities:new Set() };
 const $=s=>document.querySelector(s);
 const TYPE_LABEL={ national_pick:'인기', aptitude_match:'적성맞춤', stage_core:'단계핵심' };
 const RIASEC={ realistic:'현실형 R', investigative:'탐구형 I', artistic:'예술형 A', social:'사회형 S', enterprising:'진취형 E', conventional:'관습형 C' };
@@ -189,7 +224,7 @@ function setStep(n){
 }
 function payload(){
   const b=parseInt($('#budget').value,10);
-  const p={ age_years:state.age, interests:[...state.picks], achievements:state.achievements };
+  const p={ age_years:state.age, interests:[...state.picks], achievements:state.achievements, activities:[...state.activities] };
   if(b) p.budget_max=b;
   const rg=($('#region').value||'').trim(); if(rg) p.region=rg;
   const wh=parseInt($('#weeklyHours').value,10); if(!isNaN(wh)) p.weekly_hours=wh;
@@ -256,6 +291,21 @@ async function loadActivities(){
     b.onclick=()=>{ b.classList.toggle('sel'); state.picks.has(o.id)?state.picks.delete(o.id):state.picks.add(o.id); }; return b; };
   const ao=$('#actOpts'); ao.innerHTML=''; data.interests.forEach(o=>ao.appendChild(mk(o)));
   const so=$('#styOpts'); so.innerHTML=''; data.styles.forEach(o=>so.appendChild(mk(o)));
+}
+async function loadExtracurriculars(){
+  const data=await (await fetch('/api/extracurriculars')).json();
+  const wrap=$('#exOpts'); wrap.innerHTML='';
+  data.categories.forEach(cat=>{
+    const items=data.options.filter(o=>o.category===cat); if(!items.length) return;
+    const h=document.createElement('div'); h.style.cssText='font-size:12px;font-weight:800;color:var(--muted);margin:8px 0 4px'; h.textContent=cat;
+    wrap.appendChild(h);
+    const box=document.createElement('div'); box.className='opts';
+    items.forEach(o=>{ const b=document.createElement('button'); b.className='opt'; b.textContent=o.label;
+      if(state.activities.has(o.id)) b.classList.add('sel');
+      b.onclick=()=>{ b.classList.toggle('sel'); state.activities.has(o.id)?state.activities.delete(o.id):state.activities.add(o.id); };
+      box.appendChild(b); });
+    wrap.appendChild(box);
+  });
 }
 
 // 미니 진단(BKT) → 성취도 반영
@@ -330,6 +380,62 @@ function personaHTML(p){
     <div class="chips" style="margin-top:6px">${p.top_interests.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>
     <div class="muted" style="margin-top:6px">${esc(p.note)}</div>
     <div class="mode" style="margin-top:6px">🎯 ${esc(p.study_mode)}</div></div>`;
+}
+
+// 능력치 8각형 레이더 (프린세스 메이커식)
+function radarSVG(axes){
+  const cx=105, cy=105, R=80, n=axes.length;
+  const pt=(i,r)=>{ const a=(-90 + i*(360/n))*Math.PI/180; return [cx+r*Math.cos(a), cy+r*Math.sin(a)]; };
+  let g='';
+  // 격자 링(4단계)
+  [0.25,0.5,0.75,1].forEach(f=>{
+    const pts=axes.map((_,i)=>pt(i,R*f).map(x=>x.toFixed(1)).join(',')).join(' ');
+    g+=`<polygon points="${pts}" fill="none" stroke="#e7e7f3" stroke-width="1"/>`; });
+  // 축선 + 라벨
+  axes.forEach((a,i)=>{ const[x,y]=pt(i,R); g+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#ece9f8" stroke-width="1"/>`;
+    const[lx,ly]=pt(i,R+16); const anchor=Math.abs(lx-cx)<6?'middle':(lx>cx?'start':'end');
+    g+=`<text x="${lx.toFixed(1)}" y="${(ly+3).toFixed(1)}" font-size="9.5" fill="${a.top?'#5a49d6':'#7a7f9a'}" font-weight="${a.top?'800':'500'}" text-anchor="${anchor}">${esc(a.label)}</text>`; });
+  // 값 폴리곤
+  const vpts=axes.map((a,i)=>pt(i,R*(a.value/100)).map(x=>x.toFixed(1)).join(',')).join(' ');
+  g+=`<polygon points="${vpts}" fill="rgba(108,92,231,.25)" stroke="#6c5ce7" stroke-width="2"/>`;
+  axes.forEach((a,i)=>{ const[x,y]=pt(i,R*(a.value/100)); g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" fill="${a.top?'#00b894':'#6c5ce7'}"/>`; });
+  return `<svg class="radar" viewBox="0 0 210 210" role="img" aria-label="능력치 레이더">${g}</svg>`;
+}
+function statsHTML(st){
+  let rows='';
+  st.axes.forEach(a=>{ rows+=`<div class="statrow ${a.top?'top':''}"><span>${esc(a.label)}</span>
+    <div class="statbar"><i style="width:${a.value}%"></i></div><b>${a.value}</b></div>`; });
+  const sig = st.source_signals&&st.source_signals.length ? `<div class="muted" style="margin-top:6px">반영: ${st.source_signals.map(esc).join(' · ')}</div>` : '';
+  return `<div class="card"><h3>📊 능력치 스탯 <span class="muted">(${esc(st.headline)})</span></h3>
+    <div class="statwrap">${radarSVG(st.axes)}<div class="statlist">${rows}</div></div>
+    ${st.top_axes.length?`<div class="chips" style="margin-top:8px"><span class="muted" style="align-self:center">강점</span>${st.top_axes.map(t=>`<span class="chip pri">${esc(t)}</span>`).join('')}</div>`:''}
+    ${st.growth_axes.length?`<div class="chips"><span class="muted" style="align-self:center">보강</span>${st.growth_axes.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`:''}
+    ${sig}<div class="muted" style="margin-top:6px">${esc(st.note)}</div></div>`;
+}
+
+// 사교육 테크트리 (스타크래프트식 진행 + 추천 루트 하이라이트)
+function techtreeHTML(tt){
+  let h=`<div class="card"><h3>🌳 사교육 테크트리 <span class="muted">(추천 루트 강조)</span></h3>`;
+  if(tt.recommended_tracks&&tt.recommended_tracks.length)
+    h+=`<div class="chips"><span class="muted" style="align-self:center">추천 계열</span>${tt.recommended_tracks.map(t=>`<span class="chip pri">${esc(t)}</span>`).join('')}</div>`;
+  h+=`<div class="tt">`;
+  tt.tracks.forEach(tr=>{
+    h+=`<div class="ttrack ${tr.recommended?'rec':''}"><div class="tlabel">${esc(tr.label)}</div><div class="tnodes">`;
+    tr.nodes.forEach(n=>{
+      h+=`<div class="tnode ${n.recommended?'on':''}">${n.recommended?'<span class="rbadge">추천</span>':''}
+        <div class="tn">${esc(n.label)}</div><div class="ta">${esc(n.age_hint)} · 비용 ${esc(n.cost_band)}</div>
+        ${n.free_alt?`<div class="tfree">무료대안: ${esc(short(n.free_alt,22))}</div>`:''}</div>`;
+    });
+    h+=`</div></div>`;
+  });
+  h+=`</div>`;
+  if(tt.route&&tt.route.length){
+    h+=`<div class="routebox"><b style="font-size:12.5px">🚩 지금 우리 아이 추천 루트</b>`;
+    tt.route.forEach(n=>{ h+=`<div class="rstep">• <b>${esc(n.label)}</b> <span class="muted">(${esc(n.age_hint)})</span> — ${esc(n.reason)}</div>`; });
+    h+=`</div>`;
+  }
+  h+=`<div class="muted" style="margin-top:6px">${esc(tt.note)}</div></div>`;
+  return h;
 }
 
 // 마인드맵
@@ -517,14 +623,14 @@ function planHTML2(pl){
 // 결과
 async function showResult(){
   state.name=($('#childName').value||'').trim();
-  const [plan,units,splan,achv,rec,path,subj,ai,careers,life,aca,persona]=await Promise.all([
+  const [plan,units,splan,achv,rec,path,subj,ai,careers,life,aca,persona,tt]=await Promise.all([
     post('/api/grade-plan'),post('/api/units'),post('/api/plan'),post('/api/achievement'),post('/api/recommend'),
     post('/api/pathway'),post('/api/subjects'),post('/api/ai-track'),post('/api/careers'),
-    post('/api/lifecycle'),post('/api/academies'),post('/api/persona')]);
+    post('/api/lifecycle'),post('/api/academies'),post('/api/persona'),post('/api/techtree')]);
   saveHistory(plan.grade); saveProfile(plan.grade); saveSync();
-  render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj); setStep(3);
+  render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,tt); setStep(3);
 }
-function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj){
+function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,tt){
   const I=rec.aptitude.interest, pw=path.pathway, topI=Object.entries(I).sort((a,b)=>b[1]-a[1]).slice(0,3);
   let h='';
   // 0) 게임화(스트릭·뱃지) + 리포트
@@ -533,6 +639,9 @@ function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj)
   h+=lifecycleHTML(life);
   // 0.5) 학습 페르소나
   h+=personaHTML(persona);
+  // 0.7) 능력치 스탯(8각 레이더) + 사교육 테크트리 (육성 엔진)
+  if(tt&&tt.stat) h+=statsHTML(tt.stat);
+  if(tt&&tt.tracks) h+=techtreeHTML(tt);
   // 1) 학년별 할 일 (주 기능)
   h+=`<div class="card">${planHTML(plan)}</div>`;
   // 1.1) 적응형 주간 학습계획
@@ -589,12 +698,12 @@ function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj)
 
 // 이벤트
 $('#toPlan').onclick=()=>{ setStep(1); loadPlan(); };
-$('#toInput').onclick=()=>{ setStep(2); renderAchv(); if(!$('#actOpts').children.length) loadActivities(); };
-$('#toResultDirect').onclick=()=>{ state.picks.clear(); state.achievements={}; showResult(); };
+$('#toInput').onclick=()=>{ setStep(2); renderAchv(); if(!$('#actOpts').children.length) loadActivities(); if(!$('#exOpts').children.length) loadExtracurriculars(); };
+$('#toResultDirect').onclick=()=>{ state.picks.clear(); state.activities.clear(); state.achievements={}; showResult(); };
 $('#back0').onclick=()=>setStep(0);
 $('#back1').onclick=()=>setStep(1);
 $('#toResult').onclick=showResult;
-$('#restart').onclick=()=>{ state.picks.clear(); state.achievements={}; setStep(0); };
+$('#restart').onclick=()=>{ state.picks.clear(); state.activities.clear(); state.achievements={}; setStep(0); };
 $('#loadSync').onclick=loadSync;
 $('#startDiag').onclick=loadDiagnostic;
 

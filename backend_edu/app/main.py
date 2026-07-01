@@ -37,10 +37,17 @@ from .mastery import (
 from .persona import build_persona
 from .planner import build_plan
 from .report import build_report
+from .stats import build_stats
+from .techtree import build_techtree
+from .extracurricular import CATEGORIES, EXTRACURRICULARS
 from .models import (
     AchievementResponse,
     AiTrackResponse,
     CareersResponse,
+    ExtracurricularOption,
+    ExtracurricularOptionsResponse,
+    StatProfile,
+    TechTreeResponse,
     GradePlanResponse,
     GuideResponse,
     LifecycleResponse,
@@ -190,6 +197,27 @@ def post_report(profile: StudentProfile) -> ReportResponse:
 def post_persona(profile: StudentProfile) -> PersonaResponse:
     """페르소나(Learner Profile) — 흥미·학습성향·성취 통합 라벨."""
     return build_persona(profile)
+
+
+@app.get("/api/extracurriculars", response_model=ExtracurricularOptionsResponse)
+def get_extracurriculars() -> ExtracurricularOptionsResponse:
+    """쉬운 입력용 — 사교육·활동(몬테소리·영어·태권도·미술 등) 계열별 선택지."""
+    return ExtracurricularOptionsResponse(
+        categories=list(CATEGORIES),
+        options=[ExtracurricularOption(id=e.id, label=e.label, category=e.category)
+                 for e in EXTRACURRICULARS])
+
+
+@app.post("/api/stats", response_model=StatProfile)
+def post_stats(profile: StudentProfile) -> StatProfile:
+    """능력치 스탯(8각형 레이더) — 관심·경험·성취를 규칙으로 합산(무과금)."""
+    return build_stats(profile)
+
+
+@app.post("/api/techtree", response_model=TechTreeResponse)
+def post_techtree(profile: StudentProfile) -> TechTreeResponse:
+    """사교육 전체 테크트리 + 능력치·나이 기반 추천 루트(스타크래프트식, 무과금)."""
+    return build_techtree(profile)
 
 
 @app.post("/api/academies", response_model=AcademiesResponse)

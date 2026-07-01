@@ -16,7 +16,7 @@ backend_edu/
 │  ├─ pathway.py       # 적성 → 미취학~대학 교육 path 생성기
 │  └─ main.py          # FastAPI 엔드포인트
 ├─ static/index.html   # 데모 UI (적성 진단 → 추천 + 로드맵 타임라인)
-└─ tests/              # pytest (25 cases)
+└─ tests/              # pytest (35 cases)
 ```
 
 ## 실행
@@ -47,6 +47,9 @@ uvicorn app.main:app --reload
 | POST | `/api/diagnostic` | 학년대 미니 진단 문항(수학·영어, 정답 비노출) |
 | POST | `/api/mastery` | 진단 응답 → **숙련도(BKT) + IRT(또래 백분위·적정 난이도) + 분산복습일(D-day)** — LLM 없음 |
 | POST | `/api/persona` | 흥미·학습성향·성취 통합 **학습 페르소나 라벨** |
+| GET | `/api/extracurriculars` | 사교육·활동(몬테소리·영어·태권도·미술 등) **계열별 선택지**(쉬운 탭 입력) |
+| POST | `/api/stats` | 관심·경험·성취 → **8각형 능력치 스탯**(레이더) — 규칙 기반, **LLM 없음** |
+| POST | `/api/techtree` | 능력치·나이 → **사교육 전체 테크트리 + 추천 루트**(스타크래프트식) — **LLM 없음** |
 | POST | `/api/report` | **부모 리포트**(페르소나·이 학년 할 일·보완·주간계획 요약) |
 | POST | `/api/academies` | 지역·약점 과목·학년 → **학원 추천**(입점/광고 별도 표기, 평점·예시데이터) |
 | GET `/api/academies/{id}/reviews` · POST `/api/reviews` | 학원 **평점·리뷰**(선생님·강의 평) 조회/작성(서버 저장) |
