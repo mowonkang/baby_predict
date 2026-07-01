@@ -282,6 +282,7 @@ class DiagnosticItem(BaseModel):
     question: str
     options: list[str]
     unit: str = ""            # 정답은 노출하지 않음
+    reviewed: bool = False    # 전문가 검수 여부
 
 
 class DiagnosticResponse(BaseModel):
@@ -305,6 +306,9 @@ class MasterySubject(BaseModel):
     level: str                # 부족/보통/잘함
     p_correct_next: float     # 다음 정답 확률
     answered: int
+    percentile: int = 50            # 또래 대비 추정 백분위(IRT, 참고)
+    recommended_difficulty: str = "중"  # 적정 난이도(상/중/하)
+    review_in_days: int = 7         # 다음 복습까지 일수(분산복습)
 
 
 class MasteryResponse(BaseModel):
@@ -320,6 +324,20 @@ class PersonaResponse(BaseModel):
     study_mode: str
     subject_levels: dict[str, str]
     note: str
+
+
+class ReportSection(BaseModel):
+    title: str
+    lines: list[str]
+
+
+class ReportResponse(BaseModel):
+    """부모 리포트 — 페르소나·할 일·보완·계획 요약."""
+
+    grade: str
+    persona_label: str
+    sections: list[ReportSection]
+    note: str = "본 리포트는 참고용이며 예시 데이터가 포함될 수 있습니다."
 
 
 class EduOption(BaseModel):

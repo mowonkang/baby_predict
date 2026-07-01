@@ -45,8 +45,9 @@ uvicorn app.main:app --reload
 | POST | `/api/units` | 나이/학년 → **이번 학년 단원 + 단원별 무료강의 링크**(칸아카데미 학년별 수학·EBS) |
 | POST | `/api/plan` | 성취도·학년·가용시간 → **적응형 주간 학습계획**(시간배분·할일·목표·무료자료·복습) — 규칙 기반, **LLM 호출 없음** |
 | POST | `/api/diagnostic` | 학년대 미니 진단 문항(수학·영어, 정답 비노출) |
-| POST | `/api/mastery` | 진단 응답 → **과목별 숙련도(BKT)** + 다음 정답 확률 — LLM 없음 |
+| POST | `/api/mastery` | 진단 응답 → **숙련도(BKT) + IRT(또래 백분위·적정 난이도) + 분산복습일(D-day)** — LLM 없음 |
 | POST | `/api/persona` | 흥미·학습성향·성취 통합 **학습 페르소나 라벨** |
+| POST | `/api/report` | **부모 리포트**(페르소나·이 학년 할 일·보완·주간계획 요약) |
 | POST | `/api/academies` | 지역·약점 과목·학년 → **학원 추천**(입점/광고 별도 표기, 평점·예시데이터) |
 | GET `/api/academies/{id}/reviews` · POST `/api/reviews` | 학원 **평점·리뷰**(선생님·강의 평) 조회/작성(서버 저장) |
 | POST | `/api/sync/save` · GET `/api/sync/{code}` | **동기화 코드** 서버 저장/조회(여러 기기, MVP) |

@@ -48,3 +48,22 @@ def test_persona_label():
 def test_persona_cold_start_is_explorer():
     p = build_persona(StudentProfile(age_years=14))
     assert "탐색형" in p.persona_label
+
+
+def test_irt_percentile_and_difficulty():
+    from app.mastery import percentile, recommend_difficulty, review_interval_days
+    hi = mastery_from_seq([True, True, True])
+    lo = mastery_from_seq([False, False, False])
+    assert percentile(hi) > percentile(lo)
+    assert recommend_difficulty(hi) == "상" and recommend_difficulty(lo) == "하"
+    # 숙련 낮으면 복습 더 빨리
+    assert review_interval_days(lo) < review_interval_days(hi)
+
+
+def test_report_builder():
+    from app.report import build_report
+    r = build_report(StudentProfile(age_years=14, interests=["act_sci", "act_math"],
+                                    achievements={"수학": "부족", "국어": "잘함"}, weekly_hours=8))
+    assert r.grade == "중2" and r.sections
+    titles = " ".join(s.title for s in r.sections)
+    assert "요약" in titles and "보완" in titles

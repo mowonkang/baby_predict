@@ -44,3 +44,43 @@ def level_from_mastery(m: float) -> str:
     if m >= 0.45:
         return "보통"
     return "부족"
+
+
+# ── L2: IRT-lite (능력·백분위·적정 난이도) ──────────────
+import math
+
+
+def ability_theta(m: float) -> float:
+    """숙련확률 → 능력 θ (로짓). 참고용 추정."""
+    m = min(0.999, max(0.001, m))
+    return round(math.log(m / (1 - m)), 3)
+
+
+def percentile(m: float) -> int:
+    """또래 대비 추정 백분위(참고). 능력 θ~N(0,1) 가정, Φ(θ)."""
+    theta = ability_theta(m)
+    phi = 0.5 * (1 + math.erf(theta / math.sqrt(2)))
+    return int(round(phi * 100))
+
+
+def recommend_difficulty(m: float) -> str:
+    """적정 난이도(성공률 ~60% 목표): 잘하면 상, 낮으면 하."""
+    if m >= 0.7:
+        return "상"
+    if m >= 0.4:
+        return "중"
+    return "하"
+
+
+# ── 분산 복습 스케줄러 (BKT 숙련도 → 다음 복습 간격) ──────
+def review_interval_days(m: float) -> int:
+    """망각곡선: 숙련 낮을수록 빨리, 높을수록 길게 복습."""
+    if m < 0.45:
+        return 2
+    if m < 0.60:
+        return 4
+    if m < 0.75:
+        return 7
+    if m < 0.90:
+        return 14
+    return 30

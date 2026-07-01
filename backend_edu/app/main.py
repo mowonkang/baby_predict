@@ -26,9 +26,17 @@ from .diagnostic import grade_answer, items_for
 from .grades import GRADES, build_grade_plan
 from .guide import build_guide
 from .lifecycle import build_lifecycle
-from .mastery import level_from_mastery, mastery_from_seq, p_correct_next
+from .mastery import (
+    level_from_mastery,
+    mastery_from_seq,
+    p_correct_next,
+    percentile,
+    recommend_difficulty,
+    review_interval_days,
+)
 from .persona import build_persona
 from .planner import build_plan
+from .report import build_report
 from .models import (
     AchievementResponse,
     AiTrackResponse,
@@ -45,6 +53,7 @@ from .models import (
     MasteryResponse,
     MasterySubject,
     PersonaResponse,
+    ReportResponse,
     ReviewsResponse,
     ReviewSubmit,
     StudentProfile,
@@ -144,8 +153,9 @@ def post_diagnostic(profile: StudentProfile) -> DiagnosticResponse:
     return DiagnosticResponse(
         band=band_for_age(profile.age_years),
         items=[DiagnosticItem(id=i.id, subject=i.subject, difficulty=i.difficulty,
-                              question=i.question, options=i.options, unit=i.unit) for i in items],
-        note=note)
+                              question=i.question, options=i.options, unit=i.unit,
+                              reviewed=i.reviewed) for i in items],
+        note=note or "문항은 예시이며 전문가 검수 후 확대 예정입니다.")
 
 
 @app.post("/api/mastery", response_model=MasteryResponse)
@@ -161,11 +171,19 @@ def post_mastery(req: MasteryRequest) -> MasteryResponse:
     subjects = []
     for subject, seq in seqs.items():
         m = mastery_from_seq(seq)
-        subjects.append(MasterySubject(subject=subject, mastery=m,
-                                       level=level_from_mastery(m),
-                                       p_correct_next=p_correct_next(m), answered=len(seq)))
+        subjects.append(MasterySubject(
+            subject=subject, mastery=m, level=level_from_mastery(m),
+            p_correct_next=p_correct_next(m), answered=len(seq),
+            percentile=percentile(m), recommended_difficulty=recommend_difficulty(m),
+            review_in_days=review_interval_days(m)))
     subjects.sort(key=lambda s: s.mastery)  # 약한 과목 먼저
     return MasteryResponse(subjects=subjects)
+
+
+@app.post("/api/report", response_model=ReportResponse)
+def post_report(profile: StudentProfile) -> ReportResponse:
+    """부모 리포트 — 페르소나·이 학년 할 일·보완·주간 계획 요약(무과금)."""
+    return build_report(profile)
 
 
 @app.post("/api/persona", response_model=PersonaResponse)

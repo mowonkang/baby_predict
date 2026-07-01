@@ -277,10 +277,50 @@ async function gradeDiagnostic(){
   const chosen=[...$('#diagBox').querySelectorAll('.diagopt.sel')].map(b=>({item_id:b.dataset.item, choice:parseInt(b.dataset.choice,10)}));
   if(!chosen.length){ alert('문항을 풀어주세요.'); return; }
   const m=await (await fetch('/api/mastery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({answers:chosen})})).json();
-  let s='<div class="mode" style="background:#6c5ce7;margin-top:6px">✅ 진단 반영됨 — ';
-  m.subjects.forEach(su=>{ state.achievements[su.subject]=su.level; s+=`${esc(su.subject)} ${Math.round(su.mastery*100)}%(${esc(su.level)}) `; });
-  s+='</div>'; $('#diagResult').innerHTML=s;
+  state.diagDone=true;
+  let s='<div class="mode" style="background:#6c5ce7;margin-top:6px">✅ 진단 반영됨</div>';
+  m.subjects.forEach(su=>{ state.achievements[su.subject]=su.level;
+    s+=`<div class="opt-line">${esc(su.subject)} 숙련 <b>${Math.round(su.mastery*100)}%</b>(${esc(su.level)}) · 또래 백분위 ~${su.percentile} · 적정난이도 ${esc(su.recommended_difficulty)} · 복습 <b>D-${su.review_in_days}</b></div>`; });
+  $('#diagResult').innerHTML=s;
   renderAchv();  // 성취도 버튼에 반영
+}
+
+// 게임화(스트릭·뱃지) + 부모 리포트
+function gamify(){
+  const nm=state.name||'우리아이', key='edupath_days_'+nm;
+  let days=[]; try{ days=JSON.parse(localStorage.getItem(key)||'[]'); }catch(e){}
+  const today=new Date().toISOString().slice(0,10);
+  if(!days.includes(today)) days.push(today);
+  days=days.slice(-90); try{ localStorage.setItem(key, JSON.stringify(days)); }catch(e){}
+  const set=new Set(days); let streak=0, d=new Date();
+  for(;;){ const s=d.toISOString().slice(0,10); if(set.has(s)){ streak++; d.setDate(d.getDate()-1); } else break; }
+  const badges=['🎯 첫걸음'];
+  if(streak>=3) badges.push('🔥 3일 연속'); if(streak>=7) badges.push('🔥 7일 연속');
+  if(Object.keys(state.achievements).length) badges.push('📝 성취 기록');
+  if(state.diagDone) badges.push('📚 진단 완료');
+  const hist=loadHistory();
+  if(hist.length>=2){ const c=hist[hist.length-1].ach||{}, p=hist[hist.length-2].ach||{};
+    if(Object.keys(c).some(k=>p[k]!=null && lvlNum(c[k])>lvlNum(p[k]))) badges.push('📈 성장'); }
+  return {streak, badges};
+}
+function gamifyHTML(){
+  const g=gamify();
+  return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+    <div><b>🔥 ${g.streak}일 연속</b> <span class="muted">방문</span></div>
+    <button class="btn ghost" style="width:auto;padding:8px 12px;margin:0" onclick="openReport()">📄 부모 리포트</button></div>
+    <div class="chips" style="margin-top:8px">${g.badges.map(b=>`<span class="chip pri">${b}</span>`).join('')}</div></div>`;
+}
+async function openReport(){
+  const r=await post('/api/report'); const nm=state.name||'우리아이';
+  let html=`<html><head><meta charset="utf-8"><title>EduPath 리포트</title>
+    <style>body{font-family:-apple-system,'Malgun Gothic',sans-serif;max-width:640px;margin:24px auto;color:#222;padding:0 16px}
+    h1{color:#6c5ce7;font-size:22px} h2{font-size:16px;border-bottom:2px solid #eee;padding-bottom:4px;margin-top:20px}
+    li{margin:3px 0} .sub{color:#666;margin:4px 0 16px} .foot{color:#999;font-size:12px;margin-top:24px}</style></head><body>`;
+  html+=`<h1>🎓 EduPath 학습 리포트</h1><div class="sub"><b>${esc(nm)}</b> · ${esc(r.grade)} · ${esc(r.persona_label)}</div>`;
+  r.sections.forEach(s=>{ html+=`<h2>${esc(s.title)}</h2><ul>${s.lines.map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`; });
+  html+=`<div class="foot">${esc(r.note)} · 생성 ${new Date().toISOString().slice(0,10)}</div></body></html>`;
+  const w=window.open('','_blank'); if(!w){ alert('팝업이 차단됐어요. 팝업 허용 후 다시 시도하세요.'); return; }
+  w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>{ try{w.print();}catch(e){} }, 400);
 }
 
 // 페르소나
@@ -487,7 +527,9 @@ async function showResult(){
 function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj){
   const I=rec.aptitude.interest, pw=path.pathway, topI=Object.entries(I).sort((a,b)=>b[1]-a[1]).slice(0,3);
   let h='';
-  // 0) 생애주기 타임라인
+  // 0) 게임화(스트릭·뱃지) + 리포트
+  h+=gamifyHTML();
+  // 0.3) 생애주기 타임라인
   h+=lifecycleHTML(life);
   // 0.5) 학습 페르소나
   h+=personaHTML(persona);
