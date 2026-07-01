@@ -132,6 +132,37 @@
     .routebox{ background:#f1eeff; border-radius:11px; padding:10px 12px; margin-top:8px; }
     .routebox .rstep{ font-size:12.5px; margin:4px 0; }
     .routebox .rstep b{ color:var(--pri-d); }
+
+    /* ===== 데스크톱(노트북) 풀화면 레이아웃 — 모바일은 위 기본값 유지 ===== */
+    @media (min-width:900px){
+      .app{ max-width:1160px; box-shadow:0 0 0 1px var(--line); }
+      header{ padding:20px 32px calc(16px); }
+      .brand{ font-size:22px; }
+      .sub{ font-size:13.5px; }
+      main{ padding:26px 32px 32px; }
+      /* 입력 단계(0~2): 읽기 좋은 폭으로 가운데 정렬 */
+      #screen0, #screen1{ max-width:640px; margin:0 auto; }
+      /* 2단계(성취도+관심+사교육): 카드를 2열로 — 활성일 때만 grid로(비활성은 display:none 유지) */
+      #screen2.active{ display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
+      #screen2 > .card{ margin:0; }
+      #screen2 > .cta{ grid-column:1 / -1; max-width:640px; margin:0 auto; width:100%; }
+      /* 결과: 카드가 화면을 채우는 메이슨리(다단) */
+      #result{ column-count:2; column-gap:20px; }
+      #result > .card{ break-inside:avoid; -webkit-column-break-inside:avoid; margin:0 0 20px; }
+      #screen3 > .cta{ max-width:640px; margin:0 auto; }
+      .banner{ max-width:1160px; }
+      /* 로드맵·테크트리 등 넓게 보면 좋은 카드는 전폭 사용 */
+      #result > .card.wide{ column-span:all; }
+    }
+    @media (min-width:1300px){
+      .app{ max-width:1320px; }
+      #result{ column-count:3; column-gap:20px; }
+    }
+    /* 마우스 환경: hover 시 카드 살짝 떠오르게(모바일 탭에는 영향 없음) */
+    @media (hover:hover) and (min-width:900px){
+      #result > .card{ transition:box-shadow .15s, transform .15s; }
+      #result > .card:hover{ box-shadow:0 6px 20px rgba(40,40,90,.12); transform:translateY(-2px); }
+    }
   </style>
 </head>
 <body>
@@ -439,7 +470,7 @@ function statsHTML(st){
 
 // 사교육 테크트리 (스타크래프트식 진행 + 추천 루트 하이라이트)
 function techtreeHTML(tt){
-  let h=`<div class="card"><h3>🌳 사교육 테크트리 <span class="muted">(추천 루트 강조)</span></h3>`;
+  let h=`<div class="card wide"><h3>🌳 사교육 테크트리 <span class="muted">(추천 루트 강조)</span></h3>`;
   const meta=[];
   if(tt.done_count) meta.push(`<span class="chip" style="background:#eef;color:#556">✅ 경험 ${tt.done_count}단계</span>`);
   if(tt.budget_conscious) meta.push(`<span class="chip" style="background:#fff3cd;color:#7a5b00">💸 예산 절약 모드</span>`);
@@ -821,7 +852,7 @@ function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,
     <div class="chips" style="margin-top:4px">${c.key_subjects.map(s=>`<span class="subj">${esc(s)}</span>`).join('')}</div></div>`; });
   h+=`</div>`;
   // 5) 마인드맵
-  h+=`<div class="card"><h3>🧠 진로 마인드맵</h3>${mindmap(pw)}<div class="muted" style="margin-top:6px">${(pw.rationale||[]).join(' ')}</div></div>`;
+  h+=`<div class="card wide"><h3>🧠 진로 마인드맵</h3>${mindmap(pw)}<div class="muted" style="margin-top:6px">${(pw.rationale||[]).join(' ')}</div></div>`;
   // 6) 적성
   h+=`<div class="card"><h3>🧭 우리 아이 적성</h3><div class="chips">`
     + topI.map((t,i)=>`<span class="chip ${i===0?'pri':''}">${RIASEC[t[0]]}</span>`).join('')+`</div><div class="riasec">`;
