@@ -1,5 +1,8 @@
-# Windows 배치 파일은 반드시 CRLF 로 체크아웃 (LF면 cmd가 파싱 실패해 창이 즉시 닫힘)
-*.bat text eol=crlf
-*.cmd text eol=crlf
+# Windows 배치 파일은 CRLF 를 바이트 그대로 보존해야 함.
+# `text eol=crlf` 는 git clone 시에만 CRLF 로 변환되고, GitHub "Download ZIP" 에는
+# 적용되지 않아 LF 로 풀린다 → cmd 가 파싱 실패해 창이 즉시 닫힘.
+# 따라서 바이너리(-text)로 취급해 저장소·클론·ZIP 모두 CRLF 를 그대로 유지한다.
+*.bat -text
+*.cmd -text
 # 셸 스크립트는 LF
 *.sh text eol=lf
