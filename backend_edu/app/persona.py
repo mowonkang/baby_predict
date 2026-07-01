@@ -14,7 +14,7 @@ _RIASEC_KO = {
     "realistic": "현실형", "investigative": "탐구형", "artistic": "예술형",
     "social": "사회형", "enterprising": "진취형", "conventional": "관습형",
 }
-_LEVEL_NORM = {"부족": "부족", "하": "부족", "보통": "보통", "중": "보통", "잘함": "잘함", "상": "잘함"}
+from . import levels
 
 
 def build_persona(profile: StudentProfile) -> PersonaResponse:
@@ -33,8 +33,7 @@ def build_persona(profile: StudentProfile) -> PersonaResponse:
     style_label = "자기주도형" if sd >= 0.6 else "관리필요형" if sd <= 0.4 else "혼합형"
 
     persona_label = f"{interest_label}·{style_label} 학습자"
-    subject_levels = {s: _LEVEL_NORM.get(str(lv).strip(), "보통")
-                      for s, lv in profile.achievements.items()}
+    subject_levels = {s: levels.coarse(lv) for s, lv in profile.achievements.items()}
 
     note = ("뚜렷한 강점이 아직 드러나지 않았어요 — 관심 활동·미니 진단을 더하면 페르소나가 선명해집니다."
             if interest_label == "탐색형"

@@ -18,7 +18,8 @@ from dataclasses import dataclass
 
 from .models import CognitiveDomain, CognitiveItem, CognitiveProfile
 
-SCALE = ["거의 아니다", "가끔", "자주", "거의 항상"]  # 0~3
+# 또래 대비 상대 비교 5단계(0~4). 중앙(또래와 비슷)=100 기준으로 매핑
+SCALE = ["또래보다 많이 부족", "조금 부족", "또래와 비슷", "조금 우수", "또래보다 우수"]
 
 DOMAINS: list[tuple[str, str]] = [
     ("verbal", "언어이해"),
@@ -92,14 +93,14 @@ def _domain_index(scores: list[int]) -> int:
     """
     if not scores:
         return 100
-    p = (sum(scores) / (3.0 * len(scores)))     # 0~1
-    index = 100 + (p - 0.5) * 60                # 0.5→100, 1→130, 0→70
+    p = (sum(scores) / (4.0 * len(scores)))     # 0~1 (척도 0~4)
+    index = 100 + (p - 0.5) * 60                # 중앙(또래와 비슷)→100, 최고→130, 최저→70
     return int(round(max(55, min(145, index))))
 
 
 def build_cognitive(behaviors: dict[str, int]) -> CognitiveProfile:
     """행동 문항 응답 → 5영역 인지 성향 프로파일."""
-    clean = {k: max(0, min(3, int(v))) for k, v in (behaviors or {}).items()
+    clean = {k: max(0, min(4, int(v))) for k, v in (behaviors or {}).items()
              if k in _ITEM_BY_ID}
     total_answered = len(clean)
 

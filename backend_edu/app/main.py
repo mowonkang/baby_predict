@@ -41,7 +41,7 @@ from .stats import build_stats
 from .techtree import build_techtree
 from .extracurricular import CATEGORIES, EXTRACURRICULARS
 from .local import build_local_hub
-from . import cognitive, community, subskill
+from . import cognitive, community, levels, subskill
 from .models import (
     AchievementResponse,
     AiTrackResponse,
@@ -239,9 +239,11 @@ def post_cognitive(profile: StudentProfile) -> CognitiveProfile:
 
 
 @app.get("/api/subskills", response_model=SubskillOptionsResponse)
-def get_subskills() -> SubskillOptionsResponse:
-    """과목 하위 스킬 목록(수학=연산·개념·응용 등). '무엇이' 부족한지 상세 입력용."""
-    return SubskillOptionsResponse(subjects=subskill.subjects(), items=subskill.options())
+def get_subskills(age: int | None = None) -> SubskillOptionsResponse:
+    """과목 하위 스킬 목록(수학=연산·개념·응용 등). 나이에 맞는 과목만. 또래 대비 5단계."""
+    return SubskillOptionsResponse(
+        subjects=subskill.subjects(age), items=subskill.options(age),
+        levels=[l["label"] for l in levels.LEVELS5])
 
 
 @app.get("/api/local-hub", response_model=LocalHubResponse)
@@ -288,8 +290,9 @@ def post_techtree(profile: StudentProfile) -> TechTreeResponse:
 @app.post("/api/academies", response_model=AcademiesResponse)
 def post_academies(profile: StudentProfile) -> AcademiesResponse:
     """지역·약점 과목·학년 기반 학원 추천(입점=광고 별도 표기)."""
+    from . import levels
     weak = [s for s, lv in profile.achievements.items()
-            if str(lv).strip() in ("부족", "하", "weak", "보통", "중", "ok")]
+            if levels.bucket(lv) in ("weak", "ok")]
     return recommend_academies(profile.age_years, profile.region, weak, profile.budget_max)
 
 

@@ -12,7 +12,8 @@ def test_cognitive_items_cover_five_domains():
 
 
 def test_cognitive_strong_domain_high_index():
-    beh = {"cg_v1": 3, "cg_v2": 3, "cg_p1": 0, "cg_p2": 0}
+    # 0~4 상대 척도: 4=또래보다 우수, 0=또래보다 많이 부족
+    beh = {"cg_v1": 4, "cg_v2": 4, "cg_p1": 0, "cg_p2": 0}
     p = build_cognitive(beh)
     d = {x.key: x for x in p.domains}
     assert d["verbal"].index >= 120 and d["verbal"].band in ("우수", "평균상")
@@ -63,3 +64,29 @@ def test_subskill_options_and_detail():
 def test_subskill_ignores_unknown():
     assert build_subskill_detail({"없음:없음": "부족", "수학:연산": "보통"}) \
         and len(build_subskill_detail({"없음:없음": "부족"})) == 0
+
+
+def test_relative_5level_scale():
+    from app import levels
+    # 또래 대비 5단계 라벨이 백분위·버킷으로 매핑
+    assert levels.percentile("최상위") > levels.percentile("우수") > levels.percentile("평균")
+    assert levels.percentile("평균") > levels.percentile("부족") > levels.percentile("매우 부족")
+    assert levels.bucket("최상위") == "good" and levels.bucket("매우 부족") == "weak"
+    # 구값 하위호환
+    assert levels.coarse("잘함") == "잘함" and levels.coarse("low10") == "부족"
+
+
+def test_subskill_5level_detail():
+    d = {x.name: x for x in build_subskill_detail(
+        {"수학:연산": "최상위", "수학:개념": "매우 부족", "수학:응용": "평균"})}
+    assert d["연산"].percentile > 85 and not d["연산"].weak
+    assert d["개념"].percentile < 15 and d["개념"].weak
+    assert "또래 평균 대비" in d["개념"].peer_band
+
+
+def test_subskill_filtered_by_age():
+    from app.subskill import subjects
+    young = subjects(8)     # 초1: 수학·국어만
+    older = subjects(13)    # 중1: 과학·사회 포함
+    assert "과학" not in young and "수학" in young
+    assert "과학" in older and "사회" in older

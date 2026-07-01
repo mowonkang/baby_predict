@@ -50,7 +50,6 @@ _SUBJECT_STAT: dict[str, str] = {
     "수학": "logic", "과학": "science", "국어": "language",
     "영어": "language", "사회": "social", "예술": "art", "체육": "physical",
 }
-_LEVEL_GAIN = {"잘함": 14, "상": 14, "보통": 5, "중": 5, "부족": 0, "하": 0}
 
 # 활동 1개당 능력치 가중치 스케일(사교육 stat_weights × 이 값)
 _EXTRA_SCALE = 16
@@ -127,14 +126,15 @@ def build_stats(profile: StudentProfile) -> StatProfile:
                     scores[stat] += gain
             signals.append("행동 관찰(인지 성향)")
 
-    # 4) 과목 성취
+    # 4) 과목 성취 (또래 대비 백분위 초과분만큼 가산 — 측정형 상대값)
     if profile.achievements:
+        from . import levels
         used = False
         for subj, lv in profile.achievements.items():
             stat = _SUBJECT_STAT.get(str(subj).strip())
             if not stat:
                 continue
-            scores[stat] += _LEVEL_GAIN.get(str(lv).strip(), 0)
+            scores[stat] += max(0.0, levels.percentile(lv) - 50) * 0.3
             used = True
         if used:
             signals.append("과목 성취도")

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from . import levels
 from .models import SubskillDetail, SubskillItem
 
 
@@ -68,45 +69,47 @@ SUBS: list[_Sub] = [
 _BY_ID = {f"{s.subject}:{s.name}": s for s in SUBS}
 
 
-def options() -> list[SubskillItem]:
+# 과목별 적용 최소 나이(하위 스킬은 초등 이상부터 의미가 있음)
+_SUBJECT_MIN_AGE = {"수학": 8, "국어": 8, "영어": 9, "과학": 11, "사회": 11}
+
+
+def _subjects_for_age(age: int | None) -> set[str]:
+    if age is None:
+        return {s.subject for s in SUBS}
+    return {subj for subj, mn in _SUBJECT_MIN_AGE.items() if age >= mn}
+
+
+def options(age: int | None = None) -> list[SubskillItem]:
+    allow = _subjects_for_age(age)
     return [SubskillItem(id=f"{s.subject}:{s.name}", subject=s.subject, name=s.name, desc=s.desc)
-            for s in SUBS]
+            for s in SUBS if s.subject in allow]
 
 
-def subjects() -> list[str]:
+def subjects(age: int | None = None) -> list[str]:
+    allow = _subjects_for_age(age)
     out: list[str] = []
     for s in SUBS:
-        if s.subject not in out:
+        if s.subject in allow and s.subject not in out:
             out.append(s.subject)
     return out
 
 
-_LEVEL = {"부족": "부족", "하": "부족", "보통": "보통", "중": "보통", "잘함": "잘함", "상": "잘함"}
-# 또래 대비 밴드 + 대략 백분위(참고)
-_BAND = {
-    "부족": ("또래 평균 대비 하위(보완 필요)", 25),
-    "보통": ("또래 평균 수준", 50),
-    "잘함": ("또래 평균 대비 상위(우수)", 80),
-}
-
-
 def build_subskill_detail(subskills: dict[str, str]) -> list[SubskillDetail]:
-    """하위스킬 응답(id→수준) → 또래 대비 상세."""
+    """하위스킬 응답(id→또래 대비 수준) → 상세(밴드·백분위·무엇/어떻게)."""
     out: list[SubskillDetail] = []
     for sid, raw in (subskills or {}).items():
         s = _BY_ID.get(sid)
-        if s is None:
+        if s is None or levels.to_key(raw) is None:
             continue
-        lvl = _LEVEL.get(str(raw).strip())
-        if lvl is None:
-            continue
-        band, pct = _BAND[lvl]
-        weak = lvl == "부족"
+        pct = levels.percentile(raw)
+        bkt = levels.bucket(raw)
+        weak = bkt == "weak"
+        band = f"또래 평균 대비 {levels.anchor(raw)} · {levels.label(raw)}"
         what = s.weak_what if weak else (s.desc + " — 양호")
-        how = s.weak_how if lvl != "잘함" else s.strong_how
+        how = s.weak_how if bkt != "good" else s.strong_how
         out.append(SubskillDetail(
-            id=sid, subject=s.subject, name=s.name, level=lvl,
+            id=sid, subject=s.subject, name=s.name, level=levels.label(raw),
             peer_band=band, percentile=pct, what=what, how=how, weak=weak))
-    # 부족 먼저
-    out.sort(key=lambda d: (not d.weak, d.subject))
+    # 부족 먼저, 그다음 백분위 낮은 순
+    out.sort(key=lambda d: (not d.weak, d.percentile))
     return out
