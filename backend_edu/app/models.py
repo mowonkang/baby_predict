@@ -83,6 +83,10 @@ class StudentProfile(BaseModel):
     weekly_hours: Optional[int] = Field(None, ge=0, le=80)
     # 경험했거나 관심 있는 사교육·활동 옵션 id(몬테소리·영어·태권도 등) — 능력치·테크트리용
     activities: list[str] = Field(default_factory=list, description="선택한 사교육·활동 경험/관심 옵션 id")
+    # WISC 5영역에서 착안한 관찰형 행동 문항 응답(item_id → 0~3 빈도) — 성향 역추론용
+    behaviors: dict[str, int] = Field(default_factory=dict, description="행동 문항 응답(0거의아니다~3거의항상)")
+    # 과목 하위 스킬별 수준(예: "수학:연산" → "부족") — 성취도 상세·또래비교용
+    subskills: dict[str, str] = Field(default_factory=dict, description="하위스킬 id → 잘함/보통/부족")
 
 
 class RecommendationType(str, Enum):
@@ -363,6 +367,7 @@ class AchievementResponse(BaseModel):
     note: str
     weak: list[SubjectPlan]  # 보완 필요 과목
     strong: list[str]        # 양호 과목
+    subskill_detail: list["SubskillDetail"] = Field(default_factory=list)  # 하위 스킬 또래비교 상세
 
 
 class LifecycleStage(BaseModel):
@@ -519,3 +524,67 @@ class CommunityPostSubmit(BaseModel):
 class CommunityCommentSubmit(BaseModel):
     author: str = Field("익명맘", max_length=20)
     text: str = Field(..., min_length=1, max_length=500)
+
+
+# ── 관찰형 인지 성향 프로파일 (WISC 5영역 착안, 진단 아님) ──────────
+class CognitiveItem(BaseModel):
+    id: str
+    domain: str        # verbal/spatial/reasoning/memory/speed
+    text: str          # 관찰 가능한 행동 서술
+
+
+class CognitiveItemsResponse(BaseModel):
+    scale: list[str]   # ["거의 아니다","가끔","자주","거의 항상"]
+    items: list[CognitiveItem]
+    note: str
+
+
+class CognitiveDomain(BaseModel):
+    key: str
+    label: str                 # 언어이해 등
+    index: int                 # 참고 지표(100=또래 평균 가정, ±15)
+    band: str                  # 보완필요/평균하/또래평균/평균상/우수
+    percentile: int            # 대략 또래 백분위
+    top: bool = False          # 상대 강점 영역?
+    answered: int = 0          # 응답 문항 수
+    hint: str = ""             # 이 영역을 키우는 한 줄
+
+
+class CognitiveProfile(BaseModel):
+    domains: list[CognitiveDomain]
+    strengths: list[str]       # 상대 강점 영역 라벨
+    supports: list[str]        # 보완 영역 라벨
+    headline: str
+    answered: int
+    note: str = ("WISC 5영역에서 착안한 관찰형 참고 프로파일입니다. 임상 지능검사·진단이 아니며, "
+                 "정확한 평가는 전문가 검사를 권장합니다. 아이 내부의 상대적 강·약점 파악용입니다.")
+
+
+# ── 성취도 하위 스킬 상세 (또래 대비) ───────────────────────────
+class SubskillItem(BaseModel):
+    id: str            # "수학:연산"
+    subject: str
+    name: str          # 연산
+    desc: str          # 무엇을 보는지
+
+
+class SubskillOptionsResponse(BaseModel):
+    subjects: list[str]
+    items: list[SubskillItem]
+    levels: list[str] = ["부족", "보통", "잘함"]
+
+
+class SubskillDetail(BaseModel):
+    id: str
+    subject: str
+    name: str
+    level: str         # 부족/보통/잘함
+    peer_band: str     # 또래 평균 대비 밴드
+    percentile: int    # 대략 백분위
+    what: str          # 무엇이 부족/양호한지
+    how: str           # 어떻게 보완/심화
+    weak: bool
+
+
+# 전방 참조(AchievementResponse → SubskillDetail) 해소
+AchievementResponse.model_rebuild()
