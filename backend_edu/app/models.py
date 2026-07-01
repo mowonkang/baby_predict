@@ -275,6 +275,53 @@ class StudyPlanResponse(BaseModel):
     updated: str = "2026-06"
 
 
+class DiagnosticItem(BaseModel):
+    id: str
+    subject: str
+    difficulty: str
+    question: str
+    options: list[str]
+    unit: str = ""            # 정답은 노출하지 않음
+
+
+class DiagnosticResponse(BaseModel):
+    band: Optional[str]
+    items: list[DiagnosticItem]
+    note: str = ""
+
+
+class MasteryAnswer(BaseModel):
+    item_id: str
+    choice: int
+
+
+class MasteryRequest(BaseModel):
+    answers: list[MasteryAnswer]
+
+
+class MasterySubject(BaseModel):
+    subject: str
+    mastery: float            # 숙련 확률(0~1)
+    level: str                # 부족/보통/잘함
+    p_correct_next: float     # 다음 정답 확률
+    answered: int
+
+
+class MasteryResponse(BaseModel):
+    subjects: list[MasterySubject]
+    note: str = "BKT(베이지안 지식추적) 기반 추정 — LLM 호출 없음."
+
+
+class PersonaResponse(BaseModel):
+    interest: InterestVector
+    learning_style: LearningStyle
+    top_interests: list[str]
+    persona_label: str        # 예: "탐구형·자기주도 학습자"
+    study_mode: str
+    subject_levels: dict[str, str]
+    note: str
+
+
 class EduOption(BaseModel):
     name: str
     provider: str

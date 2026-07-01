@@ -166,6 +166,33 @@ def test_review_submit_and_read():
     assert any("API 테스트" in rv["text"] for rv in r.json()["reviews"])
 
 
+def test_plan_endpoint():
+    res = client.post("/api/plan", json={"age_years": 14, "weekly_hours": 10,
+                                         "achievements": {"수학": "부족", "영어": "잘함"}})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["mode"] == "academic" and body["sessions"]
+
+
+def test_diagnostic_and_mastery_flow():
+    d = client.post("/api/diagnostic", json={"age_years": 9})
+    assert d.status_code == 200
+    items = d.json()["items"]
+    assert items and all("options" in it for it in items)
+    # 수학 문항에 정답(=answer index) 대신 임의 선택으로 mastery 흐름 확인
+    math = [it for it in items if it["subject"] == "수학"]
+    answers = [{"item_id": it["id"], "choice": 1} for it in math]
+    m = client.post("/api/mastery", json={"answers": answers})
+    assert m.status_code == 200
+    assert any(s["subject"] == "수학" for s in m.json()["subjects"])
+
+
+def test_persona_endpoint():
+    res = client.post("/api/persona", json={"age_years": 14, "interests": ["act_sci", "act_math"]})
+    assert res.status_code == 200
+    assert "학습자" in res.json()["persona_label"]
+
+
 def test_recommend_validation_error():
     # 만 나이 범위 초과 → 422
     res = client.post("/api/recommend", json={"age_years": 999})

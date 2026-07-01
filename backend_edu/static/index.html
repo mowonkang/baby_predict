@@ -149,6 +149,8 @@
         <div id="achv"></div>
         <label for="weeklyHours" style="margin-top:12px">주당 학습 가능 시간 (선택)</label>
         <input id="weeklyHours" type="number" min="0" max="60" placeholder="예: 8 (비우면 학년 기본값으로 배분)" />
+        <button class="btn ghost" id="startDiag" style="margin-top:10px">🎯 미니 진단으로 정확히 (수학·영어)</button>
+        <div id="diagBox"></div>
       </div>
       <div class="card">
         <h3>좋아하는 활동 (선택)</h3>
@@ -242,6 +244,7 @@ function renderAchv(){
     row.innerHTML=`<div class="nm">${subj}</div>`;
     const box=document.createElement('div'); box.className='lvls';
     LVLS.forEach(([k,lbl])=>{ const b=document.createElement('button'); b.className=k; b.textContent=lbl;
+      if(state.achievements[subj]===lbl) b.classList.add('sel');  // 진단/기존 반영
       b.onclick=()=>{ state.achievements[subj]=lbl; [...box.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); };
       box.appendChild(b); });
     row.appendChild(box); wrap.appendChild(row);
@@ -253,6 +256,40 @@ async function loadActivities(){
     b.onclick=()=>{ b.classList.toggle('sel'); state.picks.has(o.id)?state.picks.delete(o.id):state.picks.add(o.id); }; return b; };
   const ao=$('#actOpts'); ao.innerHTML=''; data.interests.forEach(o=>ao.appendChild(mk(o)));
   const so=$('#styOpts'); so.innerHTML=''; data.styles.forEach(o=>so.appendChild(mk(o)));
+}
+
+// 미니 진단(BKT) → 성취도 반영
+async function loadDiagnostic(){
+  const box=$('#diagBox'); box.innerHTML='<span class="muted">문항 불러오는 중…</span>';
+  const d=await post('/api/diagnostic');
+  if(!d.items || !d.items.length){ box.innerHTML='<span class="muted">'+esc(d.note||'이 나이대는 진단이 없어요.')+'</span>'; return; }
+  let s='';
+  d.items.forEach((it,idx)=>{ s+=`<div class="q"><div class="qt">${idx+1}. [${esc(it.subject)}] ${esc(it.question)}</div><div class="opts">`;
+    it.options.forEach((o,oi)=>{ s+=`<button type="button" class="opt diagopt" data-item="${it.id}" data-choice="${oi}">${esc(o)}</button>`; });
+    s+=`</div></div>`; });
+  s+=`<button class="btn" id="gradeDiag" style="margin-top:8px">채점 → 성취도 반영</button><div id="diagResult"></div>`;
+  box.innerHTML=s;
+  box.querySelectorAll('.diagopt').forEach(b=>b.onclick=()=>{
+    box.querySelectorAll('.diagopt[data-item="'+b.dataset.item+'"]').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); });
+  $('#gradeDiag').onclick=gradeDiagnostic;
+}
+async function gradeDiagnostic(){
+  const chosen=[...$('#diagBox').querySelectorAll('.diagopt.sel')].map(b=>({item_id:b.dataset.item, choice:parseInt(b.dataset.choice,10)}));
+  if(!chosen.length){ alert('문항을 풀어주세요.'); return; }
+  const m=await (await fetch('/api/mastery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({answers:chosen})})).json();
+  let s='<div class="mode" style="background:#6c5ce7;margin-top:6px">✅ 진단 반영됨 — ';
+  m.subjects.forEach(su=>{ state.achievements[su.subject]=su.level; s+=`${esc(su.subject)} ${Math.round(su.mastery*100)}%(${esc(su.level)}) `; });
+  s+='</div>'; $('#diagResult').innerHTML=s;
+  renderAchv();  // 성취도 버튼에 반영
+}
+
+// 페르소나
+function personaHTML(p){
+  return `<div class="card"><h3>🧬 학습 페르소나</h3>
+    <div class="track" style="background:#6c5ce7">${esc(p.persona_label)}</div>
+    <div class="chips" style="margin-top:6px">${p.top_interests.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>
+    <div class="muted" style="margin-top:6px">${esc(p.note)}</div>
+    <div class="mode" style="margin-top:6px">🎯 ${esc(p.study_mode)}</div></div>`;
 }
 
 // 마인드맵
@@ -440,18 +477,20 @@ function planHTML2(pl){
 // 결과
 async function showResult(){
   state.name=($('#childName').value||'').trim();
-  const [plan,units,splan,achv,rec,path,subj,ai,careers,life,aca]=await Promise.all([
+  const [plan,units,splan,achv,rec,path,subj,ai,careers,life,aca,persona]=await Promise.all([
     post('/api/grade-plan'),post('/api/units'),post('/api/plan'),post('/api/achievement'),post('/api/recommend'),
     post('/api/pathway'),post('/api/subjects'),post('/api/ai-track'),post('/api/careers'),
-    post('/api/lifecycle'),post('/api/academies')]);
+    post('/api/lifecycle'),post('/api/academies'),post('/api/persona')]);
   saveHistory(plan.grade); saveProfile(plan.grade); saveSync();
-  render(life,plan,units,splan,achv,aca,ai,careers,rec,path,subj); setStep(3);
+  render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj); setStep(3);
 }
-function render(life,plan,units,splan,achv,aca,ai,careers,rec,path,subj){
+function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj){
   const I=rec.aptitude.interest, pw=path.pathway, topI=Object.entries(I).sort((a,b)=>b[1]-a[1]).slice(0,3);
   let h='';
   // 0) 생애주기 타임라인
   h+=lifecycleHTML(life);
+  // 0.5) 학습 페르소나
+  h+=personaHTML(persona);
   // 1) 학년별 할 일 (주 기능)
   h+=`<div class="card">${planHTML(plan)}</div>`;
   // 1.1) 적응형 주간 학습계획
@@ -515,6 +554,7 @@ $('#back1').onclick=()=>setStep(1);
 $('#toResult').onclick=showResult;
 $('#restart').onclick=()=>{ state.picks.clear(); state.achievements={}; setStep(0); };
 $('#loadSync').onclick=loadSync;
+$('#startDiag').onclick=loadDiagnostic;
 
 renderAges();
 checkPromotion();

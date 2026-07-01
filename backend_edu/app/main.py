@@ -22,9 +22,12 @@ from .ai_track import build_ai_track
 from .aptitude import ACTIVITY_OPTIONS, QUESTIONS, STYLE_OPTIONS, resolve_aptitude
 from .careers import recommend_careers
 from .curriculum import get_stage
+from .diagnostic import grade_answer, items_for
 from .grades import GRADES, build_grade_plan
 from .guide import build_guide
 from .lifecycle import build_lifecycle
+from .mastery import level_from_mastery, mastery_from_seq, p_correct_next
+from .persona import build_persona
 from .planner import build_plan
 from .models import (
     AchievementResponse,
@@ -36,6 +39,12 @@ from .models import (
     PathwayResponse,
     RecommendationResponse,
     AcademiesResponse,
+    DiagnosticItem,
+    DiagnosticResponse,
+    MasteryRequest,
+    MasteryResponse,
+    MasterySubject,
+    PersonaResponse,
     ReviewsResponse,
     ReviewSubmit,
     StudentProfile,
@@ -124,6 +133,45 @@ def post_units(profile: StudentProfile) -> UnitsResponse:
 def post_plan(profile: StudentProfile) -> StudyPlanResponse:
     """적응형 주간 학습 계획(규칙 기반, 추가 과금 없음) — 시간배분·할일·목표·무료자료·복습."""
     return build_plan(profile)
+
+
+@app.post("/api/diagnostic", response_model=DiagnosticResponse)
+def post_diagnostic(profile: StudentProfile) -> DiagnosticResponse:
+    """학년대에 맞는 미니 진단 문항(수학·영어 등). 정답은 노출하지 않음."""
+    from .diagnostic import band_for_age
+    items = items_for(profile.age_years)
+    note = ("" if items else "이 나이대는 미니 진단 대신 놀이·자가체크를 사용해요.")
+    return DiagnosticResponse(
+        band=band_for_age(profile.age_years),
+        items=[DiagnosticItem(id=i.id, subject=i.subject, difficulty=i.difficulty,
+                              question=i.question, options=i.options, unit=i.unit) for i in items],
+        note=note)
+
+
+@app.post("/api/mastery", response_model=MasteryResponse)
+def post_mastery(req: MasteryRequest) -> MasteryResponse:
+    """미니 진단 응답 → 과목별 숙련도(BKT). LLM 호출 없음."""
+    seqs: dict[str, list[bool]] = {}
+    for a in req.answers:
+        graded = grade_answer(a.item_id, a.choice)
+        if graded is None:
+            continue
+        subject, correct = graded
+        seqs.setdefault(subject, []).append(correct)
+    subjects = []
+    for subject, seq in seqs.items():
+        m = mastery_from_seq(seq)
+        subjects.append(MasterySubject(subject=subject, mastery=m,
+                                       level=level_from_mastery(m),
+                                       p_correct_next=p_correct_next(m), answered=len(seq)))
+    subjects.sort(key=lambda s: s.mastery)  # 약한 과목 먼저
+    return MasteryResponse(subjects=subjects)
+
+
+@app.post("/api/persona", response_model=PersonaResponse)
+def post_persona(profile: StudentProfile) -> PersonaResponse:
+    """페르소나(Learner Profile) — 흥미·학습성향·성취 통합 라벨."""
+    return build_persona(profile)
 
 
 @app.post("/api/academies", response_model=AcademiesResponse)
