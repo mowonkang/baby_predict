@@ -112,6 +112,21 @@ _STAT_TRACK: dict[str, str] = {
     "leadership": "human",
 }
 
+# 입력한 사교육/활동 → (트랙 key, 도달 tier). 그 tier 이하 노드는 '경험함(done)'으로 표시.
+_ACTIVITY_PROGRESS: dict[str, tuple[str, int]] = {
+    "ex_eng": ("lang", 1), "ex_hanja": ("lang", 1),
+    "ex_read": ("human", 1), "ex_speech": ("human", 1),
+    "ex_monte": ("think", 0), "ex_thinkmath": ("think", 1),
+    "ex_coding": ("think", 1), "ex_baduk": ("think", 0),
+    "ex_science": ("sci", 1),
+    "ex_music": ("art", 1), "ex_paint": ("art", 1), "ex_ballet": ("art", 1),
+    "ex_taekwondo": ("phys", 1), "ex_swim": ("phys", 1), "ex_ball": ("phys", 1),
+    "ex_group": ("human", 0), "ex_leader": ("human", 2),
+}
+
+# 예산이 이 값 미만(월, 원)이면 무료·저가 대안 우선 안내
+_BUDGET_TIGHT = 200_000
+
 
 def _current_tier(age: int) -> int:
     if age < 8:
@@ -123,18 +138,19 @@ def _current_tier(age: int) -> int:
     return 3
 
 
-def _to_node(n: _Node, *, recommended: bool = False, reason: str = "") -> TechNode:
+def _to_node(n: _Node, *, recommended: bool = False, reason: str = "",
+             done: bool = False) -> TechNode:
     return TechNode(
         id=n.id, label=n.label, tier=n.tier, age_hint=n.age_hint, stat=n.stat,
         requires=list(n.requires), cost_band=n.cost_band, free_alt=n.free_alt,
-        recommended=recommended, reason=reason,
+        recommended=recommended, reason=reason, done=done,
     )
 
 
 def build_techtree(profile: StudentProfile) -> TechTreeResponse:
-    """능력치·나이 기반 사교육 테크트리 + 추천 루트."""
+    """능력치·나이·경험 기반 사교육 테크트리 + 개인화 추천 루트."""
     stat = build_stats(profile)
-    tier = _current_tier(profile.age_years)
+    age_tier = _current_tier(profile.age_years)
 
     # 강점 능력치 → 추천 트랙 key (상위 축 순서, 중복 제거)
     rec_track_keys: list[str] = []
@@ -149,19 +165,44 @@ def build_techtree(profile: StudentProfile) -> TechTreeResponse:
     if not rec_track_keys:
         rec_track_keys = ["human", "think"]
 
+    # 이미 경험한 사교육 → 트랙별 도달 tier(그 이하 노드는 done)
+    reached: dict[str, int] = {}
+    for aid in profile.activities:
+        tk_t = _ACTIVITY_PROGRESS.get(aid)
+        if tk_t is None:
+            continue
+        tk, t = tk_t
+        reached[tk] = max(reached.get(tk, -1), t)
+
+    budget_tight = profile.budget_max is not None and profile.budget_max < _BUDGET_TIGHT
+
     tracks_out: list[TechTrack] = []
     route: list[TechNode] = []
+    done_count = 0
     for tr in TRACKS:
         is_rec_track = tr.key in rec_track_keys
+        done_tier = reached.get(tr.key, -1)
+        # 다음에 밟을 시작 tier = 나이 단계와 '경험 다음 단계' 중 큰 값(단, 경험이 나이보다 앞서면 존중)
+        start = max(age_tier, done_tier + 1)
+        if start > 3:
+            start = 3
         nodes_out: list[TechNode] = []
         for n in tr.nodes:
-            # 추천 루트: 추천 트랙이고, 현재 tier(지금 할 것) 또는 다음 tier(다음 목표)
-            on_route = is_rec_track and n.tier in (tier, tier + 1)
+            done = n.tier <= done_tier
+            if done:
+                done_count += 1
+            # 추천 루트: 추천 트랙 · 미경험 · 시작 tier(지금) 또는 그 다음(목표)
+            on_route = is_rec_track and not done and n.tier in (start, start + 1)
             reason = ""
             if on_route:
-                reason = ("지금 시기에 강점을 살릴 핵심 단계"
-                          if n.tier == tier else "다음 단계 목표(미리 준비)")
-            node = _to_node(n, recommended=on_route, reason=reason)
+                if n.tier == start:
+                    reason = ("경험한 단계 다음, 지금 이어갈 핵심 단계"
+                              if done_tier >= 0 else "지금 시기에 강점을 살릴 핵심 단계")
+                else:
+                    reason = "다음 단계 목표(미리 준비)"
+                if budget_tight and n.cost_band in ("중", "고") and n.free_alt:
+                    reason += f" · 예산 절약: {n.free_alt}"
+            node = _to_node(n, recommended=on_route, reason=reason, done=done)
             nodes_out.append(node)
             if on_route:
                 route.append(node)
@@ -172,7 +213,11 @@ def build_techtree(profile: StudentProfile) -> TechTreeResponse:
     route.sort(key=lambda n: (n.tier, n.id))
     rec_labels = [tr.label for tr in TRACKS if tr.key in rec_track_keys]
 
+    note = ("능력치·나이·경험을 규칙으로 매칭한 추천 루트 — 예시 포함, LLM 호출 없음."
+            + (" 예산이 빠듯해 무료·저가 대안을 우선 안내합니다." if budget_tight else ""))
+
     return TechTreeResponse(
         stat=stat, tracks=tracks_out, route=route,
-        recommended_tracks=rec_labels,
+        recommended_tracks=rec_labels, done_count=done_count,
+        budget_conscious=budget_tight, note=note,
     )

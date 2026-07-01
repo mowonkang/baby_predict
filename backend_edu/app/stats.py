@@ -66,6 +66,19 @@ def _level_label(v: int) -> str:
     return "새싹"
 
 
+# 최상위 능력치 → 육성 타이틀(프린세스메이커식 캐릭터 정체성)
+_TITLE_BY_STAT: dict[str, str] = {
+    "language": "이야기꾼 언어가",
+    "logic": "논리 전략가",
+    "science": "꼬마 과학자",
+    "art": "예술가",
+    "physical": "운동 챔피언",
+    "social": "친화형 조력가",
+    "leadership": "타고난 리더",
+    "creativity": "창의 발명가",
+}
+
+
 def build_stats(profile: StudentProfile) -> StatProfile:
     """입력 프로필 → 8각형 능력치. 규칙 기반 합산 후 5~100으로 클램프."""
     scores: dict[str, float] = {k: float(BASE) for k in _STAT_KEYS}
@@ -137,6 +150,9 @@ def build_stats(profile: StudentProfile) -> StatProfile:
     else:
         head = "탐색형(입력을 더하면 뚜렷해져요)"
 
+    overall = int(round(sum(a.value for a in axes) / len(axes)))
+    title = _TITLE_BY_STAT.get(top[0].key, "탐색가") if top else "탐색가"
+
     note = ("아직 입력이 적어 능력치가 평평해요 — 관심활동·사교육 경험·미니 진단을 더하면 뚜렷해집니다."
             if not top else
             "입력(관심·경험·성취)을 규칙 기반으로 합산한 참고용 능력치 — LLM 호출 없음.")
@@ -146,6 +162,9 @@ def build_stats(profile: StudentProfile) -> StatProfile:
         top_axes=[a.label for a in top],
         growth_axes=[a.label for a in growth],
         headline=head,
+        overall=overall,
+        overall_level=_level_label(overall),
+        title=title,
         note=note,
         source_signals=signals,
     )

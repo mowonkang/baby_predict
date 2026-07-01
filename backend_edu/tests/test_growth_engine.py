@@ -65,3 +65,38 @@ def test_techtree_cold_start_has_default_route():
     r = build_techtree(StudentProfile(age_years=6))
     assert r.route                    # 콜드스타트도 기본 루트 제공
     assert r.recommended_tracks
+
+
+def test_stats_overall_and_title():
+    s = build_stats(StudentProfile(age_years=12, interests=["act_sci", "act_math"]))
+    assert 5 <= s.overall <= 100
+    assert s.title == "논리 전략가" or s.title == "꼬마 과학자"  # 상위축 기반
+    # 콜드스타트 타이틀은 탐색가
+    assert build_stats(StudentProfile(age_years=10)).title == "탐색가"
+
+
+def test_techtree_marks_done_from_activities():
+    # 사고력수학(think tier1) 경험 → think0·think1 done 표시
+    r = build_techtree(StudentProfile(age_years=10, interests=["act_math"],
+                                      activities=["ex_thinkmath"]))
+    think = next(t for t in r.tracks if t.key == "think")
+    done = [n for n in think.nodes if n.done]
+    assert {n.tier for n in done} == {0, 1}
+    assert r.done_count >= 2
+
+
+def test_techtree_route_advances_past_done():
+    # 이미 think tier1 경험한 초등(=나이 tier1) → 루트는 tier2부터
+    r = build_techtree(StudentProfile(age_years=10, interests=["act_math"],
+                                      activities=["ex_thinkmath"]))
+    think_route = [n for n in r.route if n.id.startswith("think")]
+    assert think_route and min(n.tier for n in think_route) == 2
+    assert all(not n.done for n in r.route)  # 경험한 단계는 루트에 안 넣음
+
+
+def test_techtree_budget_conscious():
+    r = build_techtree(StudentProfile(age_years=10, interests=["act_math"], budget_max=100000))
+    assert r.budget_conscious
+    assert any("예산 절약" in n.reason for n in r.route)
+    r2 = build_techtree(StudentProfile(age_years=10, interests=["act_math"]))
+    assert not r2.budget_conscious

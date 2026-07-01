@@ -16,7 +16,7 @@ backend_edu/
 │  ├─ pathway.py       # 적성 → 미취학~대학 교육 path 생성기
 │  └─ main.py          # FastAPI 엔드포인트
 ├─ static/index.html   # 데모 UI (적성 진단 → 추천 + 로드맵 타임라인)
-└─ tests/              # pytest (35 cases)
+└─ tests/              # pytest (39 cases)
 ```
 
 ## 실행

@@ -122,6 +122,8 @@
     .tnode + .tnode{ margin-left:16px; }
     .tnode + .tnode::before{ content:"→"; position:absolute; left:-15px; top:50%; transform:translateY(-50%); color:#c7c3e0; font-size:13px; }
     .tnode.on{ border-color:var(--ok); background:#eefaf5; box-shadow:0 0 0 2px #c7f0e3; }
+    .tnode.done{ border-color:#cdd0e6; background:#f3f4fb; opacity:.72; }
+    .tnode.done .tn{ color:#6b7093; }
     .tnode .tn{ font-weight:700; color:#2a2740; }
     .tnode .ta{ color:var(--muted); font-size:10px; margin-top:2px; }
     .tnode .tfree{ color:var(--free); font-size:10px; margin-top:2px; }
@@ -401,13 +403,35 @@ function radarSVG(axes){
   axes.forEach((a,i)=>{ const[x,y]=pt(i,R*(a.value/100)); g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" fill="${a.top?'#00b894':'#6c5ce7'}"/>`; });
   return `<svg class="radar" viewBox="0 0 210 210" role="img" aria-label="능력치 레이더">${g}</svg>`;
 }
+// 능력치 스냅샷 저장 → 지난 방문 대비 성장(Δ) 계산 (프린세스메이커식 성장 체감)
+function snapshotStats(st){
+  const nm=state.name||'우리아이', key='edupath_stats_'+nm;
+  let hist=[]; try{ hist=JSON.parse(localStorage.getItem(key)||'[]'); }catch(e){}
+  const today=new Date().toISOString().slice(0,10);
+  const cur={ date:today, overall:st.overall, axes:{} };
+  st.axes.forEach(a=>cur.axes[a.key]=a.value);
+  const prev=hist.length ? hist[hist.length-1] : null;
+  const delta={}; let overallD=0;
+  if(prev){ st.axes.forEach(a=>{ const d=a.value-(prev.axes[a.key]??a.value); if(d) delta[a.key]=d; });
+    overallD=st.overall-(prev.overall??st.overall); }
+  // 같은 날 재방문이면 마지막 스냅샷 갱신, 아니면 추가
+  if(prev && prev.date===today) hist[hist.length-1]=cur; else hist.push(cur);
+  try{ localStorage.setItem(key, JSON.stringify(hist.slice(-60))); }catch(e){}
+  return { delta, overallD, has:!!prev };
+}
 function statsHTML(st){
+  const gr=snapshotStats(st);
+  const dChip=v=>v>0?`<span style="color:var(--ok);font-weight:800">▲${v}</span>`:(v<0?`<span style="color:var(--warn)">▼${-v}</span>`:'');
   let rows='';
-  st.axes.forEach(a=>{ rows+=`<div class="statrow ${a.top?'top':''}"><span>${esc(a.label)}</span>
-    <div class="statbar"><i style="width:${a.value}%"></i></div><b>${a.value}</b></div>`; });
+  st.axes.forEach(a=>{ const d=gr.delta[a.key]; rows+=`<div class="statrow ${a.top?'top':''}"><span>${esc(a.label)}</span>
+    <div class="statbar"><i style="width:${a.value}%"></i></div><b>${a.value}</b> ${d?dChip(d):''}</div>`; });
   const sig = st.source_signals&&st.source_signals.length ? `<div class="muted" style="margin-top:6px">반영: ${st.source_signals.map(esc).join(' · ')}</div>` : '';
-  return `<div class="card"><h3>📊 능력치 스탯 <span class="muted">(${esc(st.headline)})</span></h3>
-    <div class="statwrap">${radarSVG(st.axes)}<div class="statlist">${rows}</div></div>
+  const grow = gr.has ? `<span class="chip" style="background:#eafaf3;color:#0a8">지난 방문 대비 종합 ${gr.overallD>0?'▲'+gr.overallD:(gr.overallD<0?'▼'+(-gr.overallD):'유지')}</span>` : '';
+  return `<div class="card"><h3>📊 능력치 스탯</h3>
+    <div class="track" style="background:linear-gradient(135deg,#6c5ce7,#8e7bf0);display:flex;justify-content:space-between;align-items:center">
+      <span>🏅 ${esc(st.title)}</span><span style="font-size:13px;opacity:.95">Lv.${st.overall} · ${esc(st.overall_level)}</span></div>
+    <div class="chips" style="margin-top:6px"><span class="chip">${esc(st.headline)}</span>${grow}</div>
+    <div class="statwrap" style="margin-top:8px">${radarSVG(st.axes)}<div class="statlist">${rows}</div></div>
     ${st.top_axes.length?`<div class="chips" style="margin-top:8px"><span class="muted" style="align-self:center">강점</span>${st.top_axes.map(t=>`<span class="chip pri">${esc(t)}</span>`).join('')}</div>`:''}
     ${st.growth_axes.length?`<div class="chips"><span class="muted" style="align-self:center">보강</span>${st.growth_axes.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`:''}
     ${sig}<div class="muted" style="margin-top:6px">${esc(st.note)}</div></div>`;
@@ -416,14 +440,19 @@ function statsHTML(st){
 // 사교육 테크트리 (스타크래프트식 진행 + 추천 루트 하이라이트)
 function techtreeHTML(tt){
   let h=`<div class="card"><h3>🌳 사교육 테크트리 <span class="muted">(추천 루트 강조)</span></h3>`;
+  const meta=[];
+  if(tt.done_count) meta.push(`<span class="chip" style="background:#eef;color:#556">✅ 경험 ${tt.done_count}단계</span>`);
+  if(tt.budget_conscious) meta.push(`<span class="chip" style="background:#fff3cd;color:#7a5b00">💸 예산 절약 모드</span>`);
   if(tt.recommended_tracks&&tt.recommended_tracks.length)
-    h+=`<div class="chips"><span class="muted" style="align-self:center">추천 계열</span>${tt.recommended_tracks.map(t=>`<span class="chip pri">${esc(t)}</span>`).join('')}</div>`;
+    h+=`<div class="chips"><span class="muted" style="align-self:center">추천 계열</span>${tt.recommended_tracks.map(t=>`<span class="chip pri">${esc(t)}</span>`).join('')}${meta.join('')}</div>`;
   h+=`<div class="tt">`;
   tt.tracks.forEach(tr=>{
     h+=`<div class="ttrack ${tr.recommended?'rec':''}"><div class="tlabel">${esc(tr.label)}</div><div class="tnodes">`;
     tr.nodes.forEach(n=>{
-      h+=`<div class="tnode ${n.recommended?'on':''}">${n.recommended?'<span class="rbadge">추천</span>':''}
-        <div class="tn">${esc(n.label)}</div><div class="ta">${esc(n.age_hint)} · 비용 ${esc(n.cost_band)}</div>
+      const cls=n.done?'done':(n.recommended?'on':'');
+      const badge=n.done?'<span class="rbadge" style="background:#8a8fb0">완료</span>':(n.recommended?'<span class="rbadge">추천</span>':'');
+      h+=`<div class="tnode ${cls}">${badge}
+        <div class="tn">${n.done?'✅ ':''}${esc(n.label)}</div><div class="ta">${esc(n.age_hint)} · 비용 ${esc(n.cost_band)}</div>
         ${n.free_alt?`<div class="tfree">무료대안: ${esc(short(n.free_alt,22))}</div>`:''}</div>`;
     });
     h+=`</div></div>`;

@@ -396,6 +396,9 @@ class StatProfile(BaseModel):
     top_axes: list[str]        # 강점 축 라벨(상위 2~3)
     growth_axes: list[str]     # 보강 축 라벨(하위 1~2)
     headline: str              # 한 줄 요약(예: "탐구·언어형 새싹")
+    overall: int = 40          # 종합 능력치(축 평균, 0~100)
+    overall_level: str = "새싹"  # 종합 레벨 라벨
+    title: str = "탐색가"       # 육성 타이틀(프린세스메이커식 캐릭터 정체성)
     note: str = "입력(관심활동·경험·성취)을 규칙 기반으로 합산한 참고용 능력치 — LLM 호출 없음."
     source_signals: list[str] = Field(default_factory=list)  # 어떤 입력이 반영됐는지
 
@@ -413,6 +416,7 @@ class TechNode(BaseModel):
     free_alt: str = ""     # 무료·저가 대안 한 줄
     recommended: bool = False  # 추천 루트에 포함?
     reason: str = ""       # 추천 이유(추천 노드일 때)
+    done: bool = False     # 이미 경험한 단계(입력한 활동 반영)
 
 
 class TechTrack(BaseModel):
@@ -430,9 +434,11 @@ class TechTreeResponse(BaseModel):
 
     stat: StatProfile
     tracks: list[TechTrack]        # 전체 계열 트리
-    route: list[TechNode]          # 추천 루트(현재 나이 기준 다음 스텝, tier 순)
+    route: list[TechNode]          # 추천 루트(현재 나이·경험 기준 다음 스텝, tier 순)
     recommended_tracks: list[str]  # 강점 기반 추천 계열 라벨
-    note: str = "능력치·나이·관심을 규칙으로 매칭한 추천 루트 — 예시 포함, LLM 호출 없음."
+    done_count: int = 0            # 이미 경험한 단계 수(입력 활동 반영)
+    budget_conscious: bool = False  # 예산 빠듯 → 무료·저가 대안 우선 권장
+    note: str = "능력치·나이·경험을 규칙으로 매칭한 추천 루트 — 예시 포함, LLM 호출 없음."
 
 
 class ExtracurricularOption(BaseModel):
