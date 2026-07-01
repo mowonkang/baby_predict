@@ -8,116 +8,202 @@
   <link rel="apple-touch-icon" href="/static/icon.svg" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="EduPath" />
-  <title>EduPath — 적성 기반 교육 로드맵</title>
+  <title>EduPath — 학년별 할 일 + 과목 보완 추천</title>
   <style>
-    :root {
-      --pri:#6c5ce7; --pri-d:#5a49d6; --bg:#f4f4fb; --card:#fff; --ink:#1f2230;
-      --muted:#7a7f9a; --ok:#00b894; --warn:#e17055; --line:#e7e7f3;
-    }
-    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-    html,body { margin:0; }
-    body {
-      font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
-      background:var(--bg); color:var(--ink); padding-bottom:env(safe-area-inset-bottom);
-    }
-    .app { max-width:480px; margin:0 auto; min-height:100vh; background:var(--bg); position:relative; }
-    header {
-      background:linear-gradient(135deg,var(--pri),#8e7bf0); color:#fff;
-      padding:calc(18px + env(safe-area-inset-top)) 18px 18px; position:sticky; top:0; z-index:5;
-    }
-    header .brand { display:flex; align-items:center; gap:8px; font-weight:800; font-size:19px; }
-    header .sub { opacity:.9; font-size:12.5px; margin-top:4px; }
-    .steps { display:flex; gap:6px; margin-top:14px; }
-    .steps i { height:4px; flex:1; background:rgba(255,255,255,.35); border-radius:2px; }
-    .steps i.on { background:#fff; }
-    main { padding:16px; }
-    .screen { display:none; animation:fade .25s ease; }
-    .screen.active { display:block; }
-    @keyframes fade { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
-    .card { background:var(--card); border-radius:16px; padding:18px; margin:0 0 14px; box-shadow:0 2px 10px rgba(40,40,90,.06); }
-    h2 { font-size:18px; margin:2px 0 12px; }
-    h3 { font-size:15px; margin:0 0 8px; }
-    label { display:block; font-size:13.5px; font-weight:700; margin:12px 0 6px; }
-    input { width:100%; padding:13px; border:1.5px solid var(--line); border-radius:11px; font-size:16px; }
-    input:focus { outline:none; border-color:var(--pri); }
-    .hint { color:var(--muted); font-size:12px; margin-top:4px; }
-    .age-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:6px; }
-    .age-grid button { padding:12px 6px; border:1.5px solid var(--line); background:#fff; border-radius:11px; font-size:13px; cursor:pointer; line-height:1.3; }
-    .age-grid button.sel { border-color:var(--pri); background:#f1eeff; color:var(--pri-d); font-weight:700; }
-    .age-grid button small { display:block; color:var(--muted); font-size:11px; font-weight:400; }
-    .q { padding:12px 0; border-bottom:1px solid var(--line); }
-    .q:last-child { border-bottom:0; }
-    .q .qt { font-size:14px; margin-bottom:8px; }
-    .scale { display:flex; gap:6px; }
-    .scale button { flex:1; padding:10px 0; border:1.5px solid var(--line); background:#fff; border-radius:9px; font-size:13px; cursor:pointer; color:var(--muted); }
-    .scale button.sel { background:var(--pri); color:#fff; border-color:var(--pri); font-weight:700; }
-    .scale .lbl { font-size:10.5px; color:var(--muted); display:flex; justify-content:space-between; margin-bottom:4px; }
-    .cta { position:sticky; bottom:0; background:linear-gradient(180deg,rgba(244,244,251,0),var(--bg) 30%); padding:12px 0 16px; }
-    .btn { width:100%; padding:15px; background:var(--pri); color:#fff; border:none; border-radius:13px; font-size:16px; font-weight:800; cursor:pointer; }
-    .btn:disabled { opacity:.45; }
-    .btn.ghost { background:#fff; color:var(--pri); border:1.5px solid var(--pri); }
-    .counter { text-align:center; font-size:12.5px; color:var(--muted); margin-bottom:8px; }
+    :root{ --pri:#6c5ce7; --pri-d:#5a49d6; --bg:#f4f4fb; --card:#fff; --ink:#1f2230;
+      --muted:#7a7f9a; --ok:#00b894; --warn:#e17055; --line:#e7e7f3; --study:#0984e3; --free:#00b894; }
+    *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html,body{ margin:0; }
+    body{ font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+    .app{ max-width:480px; margin:0 auto; min-height:100vh; }
+    header{ background:linear-gradient(135deg,var(--pri),#8e7bf0); color:#fff; padding:calc(18px + env(safe-area-inset-top)) 18px 18px; position:sticky; top:0; z-index:5; }
+    .brand{ display:flex; align-items:center; gap:8px; font-weight:800; font-size:19px; }
+    .sub{ opacity:.9; font-size:12.5px; margin-top:4px; }
+    .steps{ display:flex; gap:6px; margin-top:14px; }
+    .steps i{ height:4px; flex:1; background:rgba(255,255,255,.35); border-radius:2px; }
+    .steps i.on{ background:#fff; }
+    main{ padding:16px; }
+    .screen{ display:none; animation:fade .25s ease; } .screen.active{ display:block; }
+    @keyframes fade{ from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+    .card{ background:var(--card); border-radius:16px; padding:18px; margin:0 0 14px; box-shadow:0 2px 10px rgba(40,40,90,.06); }
+    h2{ font-size:18px; margin:2px 0 12px; } h3{ font-size:15px; margin:0 0 8px; }
+    label{ display:block; font-size:13.5px; font-weight:700; margin:12px 0 6px; }
+    input{ width:100%; padding:13px; border:1.5px solid var(--line); border-radius:11px; font-size:16px; }
+    input:focus{ outline:none; border-color:var(--pri); }
+    .hint{ color:var(--muted); font-size:12px; margin-top:4px; }
+    .gradeTag{ display:inline-block; background:#f1eeff; color:var(--pri-d); font-weight:800; font-size:13px; padding:4px 12px; border-radius:11px; margin-top:8px; }
+    .age-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:6px; }
+    .age-grid button{ padding:12px 6px; border:1.5px solid var(--line); background:#fff; border-radius:11px; font-size:13px; cursor:pointer; line-height:1.3; }
+    .age-grid button.sel{ border-color:var(--pri); background:#f1eeff; color:var(--pri-d); font-weight:700; }
+    .age-grid button small{ display:block; color:var(--muted); font-size:11px; font-weight:400; }
+    .btn{ width:100%; padding:15px; background:var(--pri); color:#fff; border:none; border-radius:13px; font-size:16px; font-weight:800; cursor:pointer; }
+    .btn:disabled{ opacity:.45; }
+    .btn.ghost{ background:#fff; color:var(--pri); border:1.5px solid var(--pri); margin-top:9px; }
+    .cta{ position:sticky; bottom:0; background:linear-gradient(180deg,rgba(244,244,251,0),var(--bg) 30%); padding:12px 0 16px; }
+    .glist{ list-style:none; padding:0; margin:8px 0 0; }
+    .glist li{ padding:9px 12px; border-radius:10px; margin:6px 0; font-size:14px; background:#eef2fb; }
+    .tip{ background:#fff7ed; border:1px solid #fde2c8; color:#9a5b1e; border-radius:11px; padding:11px 13px; font-size:13px; margin-top:10px; }
+    .opts{ display:flex; flex-wrap:wrap; gap:8px; }
+    .opt{ padding:11px 13px; border:1.5px solid var(--line); background:#fff; border-radius:12px; font-size:13.5px; cursor:pointer; }
+    .opt.sel{ border-color:var(--pri); background:#f1eeff; color:var(--pri-d); font-weight:700; }
+    /* 성취도 입력 */
+    .subj-row{ display:flex; align-items:center; gap:8px; margin:8px 0; }
+    .subj-row .nm{ width:54px; font-weight:700; font-size:13.5px; }
+    .lvls{ display:flex; gap:6px; flex:1; }
+    .lvls button{ flex:1; padding:9px 0; border:1.5px solid var(--line); background:#fff; border-radius:9px; font-size:12.5px; cursor:pointer; color:var(--muted); }
+    .lvls button.good.sel{ background:var(--ok); color:#fff; border-color:var(--ok); }
+    .lvls button.ok.sel{ background:#f6b93b; color:#fff; border-color:#f6b93b; }
+    .lvls button.weak.sel{ background:var(--warn); color:#fff; border-color:var(--warn); }
     /* 결과 */
-    .chips { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
-    .chip { font-size:12px; background:#f0effb; color:#444; padding:4px 10px; border-radius:11px; }
-    .chip.pri { background:var(--pri); color:#fff; font-weight:700; }
-    .riasec .row { display:flex; align-items:center; gap:8px; margin:6px 0; font-size:12.5px; }
-    .riasec .row span { width:64px; color:var(--muted); }
-    .bar { flex:1; height:8px; background:#ece9f8; border-radius:5px; overflow:hidden; }
-    .bar > i { display:block; height:100%; background:var(--pri); }
-    .track { background:var(--ok); color:#fff; padding:12px 14px; border-radius:12px; font-weight:800; font-size:15px; }
-    .mode { background:#0984e3; color:#fff; padding:10px 13px; border-radius:11px; font-size:13px; margin-top:8px; }
-    .tl { margin-top:6px; padding-left:18px; border-left:2px solid #d8d4f3; }
-    .ms { position:relative; margin:0 0 16px; }
-    .ms::before { content:''; position:absolute; left:-25px; top:3px; width:12px; height:12px; border-radius:50%; background:var(--pri); border:2px solid #fff; box-shadow:0 0 0 2px #d8d4f3; }
-    .ms .st { font-weight:800; font-size:14px; }
-    .decision { font-size:12.5px; color:var(--warn); margin-top:4px; font-weight:600; }
-    .rec { border-left:4px solid var(--pri); padding:10px 12px; margin:9px 0; background:#fbfbff; border-radius:9px; }
-    .rec .top { display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
-    .rec .nm { font-weight:700; font-size:14px; }
-    .tag { font-size:10.5px; padding:2px 8px; border-radius:10px; background:#efecff; color:var(--pri); white-space:nowrap; }
-    .reasons { margin:6px 0 0; padding-left:16px; color:var(--muted); font-size:12px; }
-    .cost { font-weight:700; font-size:12.5px; }
-    .subj-group { margin:10px 0; }
-    .subj-group .gt { font-size:13px; font-weight:800; color:var(--pri-d); margin-bottom:6px; }
-    .subj { display:inline-block; font-size:12px; background:#f1eeff; color:#3a3550; padding:5px 10px; border-radius:9px; margin:3px 5px 3px 0; }
-    .muted { color:var(--muted); font-size:12.5px; }
-    .center { text-align:center; }
+    .chips{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+    .chip{ font-size:12px; background:#f0effb; color:#444; padding:4px 10px; border-radius:11px; }
+    .chip.pri{ background:var(--pri); color:#fff; font-weight:700; }
+    .riasec .row{ display:flex; align-items:center; gap:8px; margin:6px 0; font-size:12.5px; }
+    .riasec .row span{ width:64px; color:var(--muted); }
+    .bar{ flex:1; height:8px; background:#ece9f8; border-radius:5px; overflow:hidden; }
+    .bar > i{ display:block; height:100%; background:var(--pri); }
+    .track{ background:var(--ok); color:#fff; padding:12px 14px; border-radius:12px; font-weight:800; font-size:15px; }
+    .mode{ background:#0984e3; color:#fff; padding:10px 13px; border-radius:11px; font-size:13px; margin-top:8px; }
+    .rec{ border-left:4px solid var(--pri); padding:10px 12px; margin:9px 0; background:#fbfbff; border-radius:9px; }
+    .rec .top{ display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+    .rec .nm{ font-weight:700; font-size:14px; }
+    .tag{ font-size:10.5px; padding:2px 8px; border-radius:10px; background:#efecff; color:var(--pri); white-space:nowrap; }
+    .reasons{ margin:6px 0 0; padding-left:16px; color:var(--muted); font-size:12px; }
+    .lvlbadge{ font-size:11px; font-weight:800; padding:2px 8px; border-radius:9px; color:#fff; }
+    .lvlbadge.부족{ background:var(--warn); } .lvlbadge.보통{ background:#f6b93b; }
+    .opt-line{ font-size:12.5px; margin:3px 0; }
+    .free-cost{ color:var(--free); font-weight:800; }
+    .paid-cost{ color:var(--muted); font-weight:700; }
+    .subj{ display:inline-block; font-size:12px; background:#f1eeff; color:#3a3550; padding:5px 10px; border-radius:9px; margin:3px 5px 3px 0; }
+    .muted{ color:var(--muted); font-size:12.5px; }
+    svg.mind{ width:100%; height:auto; display:block; }
+    .banner{ background:#fff3cd; border:1px solid #ffe08a; color:#7a5b00; padding:11px 13px; border-radius:11px; margin:0 0 12px; font-size:13.5px; cursor:pointer; }
+    .life{ position:relative; padding-left:6px; }
+    .lifeitem{ display:flex; gap:10px; align-items:flex-start; padding:6px 0; }
+    .lifeitem .ld{ width:12px; height:12px; border-radius:50%; background:#d8d4f3; margin-top:3px; flex:none; border:2px solid #fff; box-shadow:0 0 0 2px #ece9f8; }
+    .lifeitem.cur .ld{ background:var(--ok); box-shadow:0 0 0 3px #c7f0e3; }
+    .lifeitem.cur b{ color:var(--pri-d); }
+    .src{ font-size:11px; color:var(--muted); margin-top:10px; padding-top:8px; border-top:1px dashed var(--line); }
+    .src b{ color:#5a8; }
+    .aca{ border:1px solid var(--line); border-radius:11px; padding:11px 12px; margin:9px 0; }
+    .aca.sp{ border-color:#ffd9a0; background:#fffaf2; }
+    .aca .top{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+    .aca .nm{ font-weight:700; font-size:14px; }
+    .adbadge{ font-size:10px; font-weight:800; background:#e17055; color:#fff; padding:2px 7px; border-radius:8px; }
+    .star{ color:#f6b93b; font-weight:800; }
+    .aca .meta{ color:var(--muted); font-size:12px; margin-top:2px; }
+    .lnk{ color:var(--pri); cursor:pointer; font-size:12.5px; text-decoration:underline; }
+    .rvbox{ margin-top:8px; border-top:1px dashed var(--line); padding-top:8px; display:none; }
+    .rv{ font-size:12.5px; margin:5px 0; }
+    .rv .rh{ font-weight:700; }
+    .rvform{ margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+    .rvform select,.rvform input{ padding:7px; border:1px solid var(--line); border-radius:8px; font-size:12.5px; }
+    .rvform input.txt{ flex:1; min-width:140px; }
+    .rvform button{ padding:7px 12px; border:none; background:var(--pri); color:#fff; border-radius:8px; font-weight:700; cursor:pointer; font-size:12.5px; }
+    /* 육성 엔진: 능력치 레이더 + 테크트리 */
+    .statwrap{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    svg.radar{ width:210px; height:210px; flex:none; display:block; margin:0 auto; }
+    .statlist{ flex:1; min-width:150px; }
+    .statrow{ display:flex; align-items:center; gap:8px; margin:4px 0; font-size:12px; }
+    .statrow span{ width:56px; color:var(--muted); }
+    .statrow.top span{ color:var(--pri-d); font-weight:800; }
+    .statbar{ flex:1; height:7px; background:#ece9f8; border-radius:5px; overflow:hidden; }
+    .statbar > i{ display:block; height:100%; background:var(--pri); }
+    .statrow.top .statbar > i{ background:var(--ok); }
+    .statrow b{ width:26px; text-align:right; font-size:11px; }
+    .tt{ overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:6px; }
+    .ttrack{ display:flex; align-items:stretch; gap:0; margin:8px 0; }
+    .ttrack .tlabel{ width:78px; flex:none; font-size:12px; font-weight:800; display:flex; align-items:center;
+      padding-right:6px; color:#3a3550; }
+    .ttrack.rec .tlabel{ color:var(--pri-d); }
+    .tnodes{ display:flex; align-items:center; gap:0; }
+    .tnode{ position:relative; width:118px; flex:none; border:1.5px solid var(--line); background:#fbfbff; border-radius:10px;
+      padding:7px 8px; font-size:11px; line-height:1.28; }
+    .tnode + .tnode{ margin-left:16px; }
+    .tnode + .tnode::before{ content:"→"; position:absolute; left:-15px; top:50%; transform:translateY(-50%); color:#c7c3e0; font-size:13px; }
+    .tnode.on{ border-color:var(--ok); background:#eefaf5; box-shadow:0 0 0 2px #c7f0e3; }
+    .tnode.done{ border-color:#cdd0e6; background:#f3f4fb; opacity:.72; }
+    .tnode.done .tn{ color:#6b7093; }
+    .tnode .tn{ font-weight:700; color:#2a2740; }
+    .tnode .ta{ color:var(--muted); font-size:10px; margin-top:2px; }
+    .tnode .tfree{ color:var(--free); font-size:10px; margin-top:2px; }
+    .tnode .rbadge{ position:absolute; top:-8px; right:-6px; background:var(--ok); color:#fff; font-size:9px;
+      font-weight:800; padding:1px 6px; border-radius:8px; }
+    .routebox{ background:#f1eeff; border-radius:11px; padding:10px 12px; margin-top:8px; }
+    .routebox .rstep{ font-size:12.5px; margin:4px 0; }
+    .routebox .rstep b{ color:var(--pri-d); }
   </style>
 </head>
 <body>
 <div class="app">
   <header>
     <div class="brand">🎓 EduPath</div>
-    <div class="sub">적성을 진단하면, 지금 할 일과 대학까지의 로드맵을 그려드려요</div>
-    <div class="steps"><i id="s0" class="on"></i><i id="s1"></i><i id="s2"></i></div>
+    <div class="sub">전 생애주기(0세~진로) · 이 시기 할 일 + 과목 보완(무료·저렴) + 성취 추적</div>
+    <div class="steps"><i id="s0" class="on"></i><i id="s1"></i><i id="s2"></i><i id="s3"></i></div>
   </header>
   <main>
-    <!-- STEP 0: 프로필 -->
+    <div id="promoBanner" class="banner" style="display:none"></div>
+    <!-- 0: 나이 -->
     <section id="screen0" class="screen active">
       <div class="card">
         <h2>우리 아이는 지금 몇 살인가요?</h2>
         <div class="age-grid" id="ageGrid"></div>
         <input id="ageInput" type="number" min="3" max="25" placeholder="직접 입력 (만 나이)" style="margin-top:10px" />
+        <label for="childName">아이 이름/별명 (이력 저장용, 선택)</label>
+        <input id="childName" type="text" maxlength="20" placeholder="예: 우리아이 (성취도 변화를 기록해요)" />
+        <label for="region">지역 (학원 추천용, 선택)</label>
+        <input id="region" type="text" maxlength="20" placeholder="예: 서울 강남, 경기 분당 (비우면 온라인 위주)" />
         <label for="budget">월 교육비 예산 (선택)</label>
         <input id="budget" type="number" min="0" placeholder="예: 300000 (비우면 제한 없음)" />
-        <p class="hint">입력 정보는 이 브라우저 안에서만 쓰이며 서버에 저장되지 않습니다(데모).</p>
+        <label for="syncCode">동기화 코드 (여러 기기에서 쓰기, 선택)</label>
+        <input id="syncCode" type="text" maxlength="40" placeholder="예: ourfamily-2026 (같은 코드로 다른 기기에서 불러오기)" />
+        <button class="btn ghost" id="loadSync" style="margin-top:8px">이 코드로 불러오기</button>
+        <p class="hint">기본은 이 브라우저에만 저장돼요. 동기화 코드를 넣으면 서버에 저장돼 다른 기기에서도 불러올 수 있어요(MVP).</p>
       </div>
-      <div class="cta"><button class="btn" id="toSurvey" disabled>적성 진단 시작 →</button></div>
+      <div class="cta"><button class="btn" id="toPlan" disabled>이 학년에 할 일 보기 →</button></div>
     </section>
 
-    <!-- STEP 1: 진단 -->
+    <!-- 1: 학년별 할 일 -->
     <section id="screen1" class="screen">
-      <div class="counter"><span id="answered">0</span> / <span id="total">0</span> 문항 응답</div>
-      <div class="card" id="surveyCard"><p class="muted">설문 불러오는 중…</p></div>
+      <div class="card" id="planCard"><p class="muted">불러오는 중…</p></div>
+      <div class="cta">
+        <button class="btn" id="toInput">과목 수준·관심사 입력 →</button>
+        <button class="btn ghost" id="toResultDirect">바로 결과 보기</button>
+        <button class="btn ghost" id="back0">← 나이 다시 선택</button>
+      </div>
+    </section>
+
+    <!-- 2: 성취도 + 관심사 -->
+    <section id="screen2" class="screen">
+      <div class="card">
+        <h2>과목별 현재 수준</h2>
+        <p class="hint">시험 점수가 없어도 느낌으로 OK. 부족한 과목엔 무료·저렴 교육을 추천해 드려요.</p>
+        <div id="achv"></div>
+        <label for="weeklyHours" style="margin-top:12px">주당 학습 가능 시간 (선택)</label>
+        <input id="weeklyHours" type="number" min="0" max="60" placeholder="예: 8 (비우면 학년 기본값으로 배분)" />
+        <button class="btn ghost" id="startDiag" style="margin-top:10px">🎯 미니 진단으로 정확히 (수학·영어)</button>
+        <div id="diagBox"></div>
+      </div>
+      <div class="card">
+        <h3>좋아하는 활동 (선택)</h3>
+        <p class="hint">우리 아이에게 맞는 걸 누르면 진로·계열이 맞춤으로 좁혀집니다.</p>
+        <div class="opts" id="actOpts"></div>
+        <h3 style="margin-top:14px">학습 성향 (해당되면)</h3>
+        <div class="opts" id="styOpts"></div>
+      </div>
+      <div class="card">
+        <h3>🧩 해봤거나 관심 있는 사교육·활동</h3>
+        <p class="hint">몬테소리·영어·태권도·미술·피아노… 탭으로 고르면 <b>능력치</b>와 <b>사교육 테크트리 루트</b>에 반영돼요.</p>
+        <div id="exOpts"></div>
+      </div>
       <div class="cta">
         <button class="btn" id="toResult">결과 보기 →</button>
-        <button class="btn ghost" id="backTo0" style="margin-top:8px">← 이전</button>
+        <button class="btn ghost" id="back1">← 이전</button>
       </div>
     </section>
 
-    <!-- STEP 2: 결과 -->
-    <section id="screen2" class="screen">
+    <!-- 3: 결과 -->
+    <section id="screen3" class="screen">
       <div id="result"></div>
       <div class="cta"><button class="btn ghost" id="restart">처음부터 다시</button></div>
     </section>
@@ -125,125 +211,645 @@
 </div>
 
 <script>
-const state = { age:null, budget:null, answers:{}, questions:[] };
-const $ = s => document.querySelector(s);
-const TYPE_LABEL = { national_pick:'인기', aptitude_match:'적성맞춤', stage_core:'단계핵심' };
-const RIASEC = { realistic:'현실형 R', investigative:'탐구형 I', artistic:'예술형 A', social:'사회형 S', enterprising:'진취형 E', conventional:'관습형 C' };
-
-const AGES = [
-  {v:5,t:'미취학',s:'4~6세'},{v:8,t:'초등 저',s:'1~2학년'},{v:10,t:'초등 중',s:'3~4학년'},
-  {v:12,t:'초등 고',s:'5~6학년'},{v:14,t:'중학생',s:'중1~3'},{v:17,t:'고등학생',s:'고1~3'}
-];
+const state={ age:null, name:'', coreSubjects:[], achievements:{}, picks:new Set(), activities:new Set() };
+const $=s=>document.querySelector(s);
+const TYPE_LABEL={ national_pick:'인기', aptitude_match:'적성맞춤', stage_core:'단계핵심' };
+const RIASEC={ realistic:'현실형 R', investigative:'탐구형 I', artistic:'예술형 A', social:'사회형 S', enterprising:'진취형 E', conventional:'관습형 C' };
+const AGES=[ {v:1,t:'영아',s:'0~2세'},{v:5,t:'유치원',s:'4~6세'},{v:8,t:'초등 저',s:'1~2학년'},{v:10,t:'초등 중',s:'3~4학년'},
+  {v:12,t:'초등 고',s:'5~6학년'},{v:14,t:'중학생',s:'중1~3'},{v:17,t:'고등학생',s:'고1~3'} ];
+const LVLS=[['good','잘함'],['ok','보통'],['weak','부족']];
 
 function setStep(n){
-  ['screen0','screen1','screen2'].forEach((id,i)=>$('#'+id).classList.toggle('active', i===n));
-  ['s0','s1','s2'].forEach((id,i)=>$('#'+id).classList.toggle('on', i<=n));
+  ['screen0','screen1','screen2','screen3'].forEach((id,i)=>$('#'+id).classList.toggle('active',i===n));
+  ['s0','s1','s2','s3'].forEach((id,i)=>$('#'+id).classList.toggle('on',i<=n));
   window.scrollTo({top:0});
 }
-
-// --- STEP 0 ---
-function renderAges(){
-  const g = $('#ageGrid');
-  AGES.forEach(a=>{
-    const b=document.createElement('button');
-    b.innerHTML = `${a.t}<small>${a.s}</small>`;
-    b.onclick=()=>{ state.age=a.v; $('#ageInput').value=''; [...g.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); $('#toSurvey').disabled=false; };
-    g.appendChild(b);
-  });
-}
-$('#ageInput')?.addEventListener('input', e=>{
-  const v=parseInt(e.target.value,10);
-  [...$('#ageGrid').children].forEach(c=>c.classList.remove('sel'));
-  state.age = (v>=3&&v<=25)?v:null;
-  $('#toSurvey').disabled = !state.age;
-});
-
-// --- STEP 1 ---
-async function loadSurvey(){
-  const data = await (await fetch('/api/survey')).json();
-  state.questions = data.questions;
-  $('#total').textContent = data.questions.length;
-  const card=$('#surveyCard'); card.innerHTML='';
-  data.questions.forEach(q=>{
-    const wrap=document.createElement('div'); wrap.className='q';
-    wrap.innerHTML = `<div class="qt">${q.text}</div>
-      <div class="lbl scale" style="border:0;padding:0"><span>전혀 아니다</span><span>매우 그렇다</span></div>`;
-    const sc=document.createElement('div'); sc.className='scale';
-    for(let v=1;v<=5;v++){
-      const b=document.createElement('button'); b.textContent=v;
-      b.onclick=()=>{ state.answers[q.id]=v; [...sc.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); updateCount(); };
-      sc.appendChild(b);
-    }
-    wrap.appendChild(sc); card.appendChild(wrap);
-  });
-}
-function updateCount(){ $('#answered').textContent = Object.keys(state.answers).length; }
-
-// --- 결과 ---
 function payload(){
-  const survey = Object.entries(state.answers).map(([question_id,value])=>({question_id,value}));
-  const body={ age_years: state.age, survey };
-  const b=parseInt($('#budget').value,10); if(b) body.budget_max=b;
-  return body;
+  const b=parseInt($('#budget').value,10);
+  const p={ age_years:state.age, interests:[...state.picks], achievements:state.achievements, activities:[...state.activities] };
+  if(b) p.budget_max=b;
+  const rg=($('#region').value||'').trim(); if(rg) p.region=rg;
+  const wh=parseInt($('#weeklyHours').value,10); if(!isNaN(wh)) p.weekly_hours=wh;
+  return p;
 }
+const post=(url)=>fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload())}).then(r=>r.json());
+const esc=t=>String(t).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+const mdb=t=>esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');  // **굵게**
+const short=(t,n)=>{ t=String(t); return t.length>n?t.slice(0,n-1)+'…':t; };
+
+// 0
+function renderAges(){
+  const g=$('#ageGrid');
+  AGES.forEach(a=>{ const b=document.createElement('button'); b.innerHTML=`${a.t}<small>${a.s}</small>`;
+    b.onclick=()=>{ state.age=a.v; $('#ageInput').value=''; [...g.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); $('#toPlan').disabled=false; };
+    g.appendChild(b); });
+}
+$('#ageInput').addEventListener('input',e=>{ const v=parseInt(e.target.value,10);
+  [...$('#ageGrid').children].forEach(c=>c.classList.remove('sel'));
+  state.age=(v>=3&&v<=25)?v:null; $('#toPlan').disabled=!state.age; });
+
+// 1 학년별 할 일
+function planHTML(gp){
+  return `<div class="gradeTag">${gp.grade} · ${gp.level}</div>
+    <h3 style="margin-top:10px">📒 이 학년에 이렇게 하세요</h3>
+    <ul class="glist">${gp.todo.map(x=>`<li>${mdb(x)}</li>`).join('')}</ul>
+    <div class="tip">💡 ${esc(gp.tip)}</div>
+    <div class="src">출처: <b>${esc(gp.source)}</b> · 갱신 ${esc(gp.updated)}</div>`;
+}
+function unitsHTML(u){
+  if(!u.units || !u.units.length) return '';
+  const groups={}; u.units.forEach(x=>{ (groups[x.subject]=groups[x.subject]||[]).push(x); });
+  let s=`<div class="card"><h3>📖 ${esc(u.grade)} 단원 — 막히면 무료강의로</h3>`;
+  Object.entries(groups).forEach(([sub,list])=>{
+    s+=`<div class="subj-group"><div class="gt">${esc(sub)}</div>`;
+    list.forEach(x=>{ s+=`<div class="opt-line">• ${esc(x.name)} → <a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.provider)}</a> <span class="free-cost">${esc(x.cost)}</span></div>`; });
+    s+=`</div>`;
+  });
+  return s+`<div class="src">출처: <b>${esc(u.source)}</b> · 갱신 ${esc(u.updated)}</div></div>`;
+}
+async function loadPlan(){
+  const gp=await post('/api/grade-plan');
+  state.coreSubjects=gp.subjects;
+  $('#planCard').innerHTML=planHTML(gp);
+}
+
+// 2 성취도 + 관심사
+function renderAchv(){
+  const wrap=$('#achv'); wrap.innerHTML='';
+  state.coreSubjects.forEach(subj=>{
+    const row=document.createElement('div'); row.className='subj-row';
+    row.innerHTML=`<div class="nm">${subj}</div>`;
+    const box=document.createElement('div'); box.className='lvls';
+    LVLS.forEach(([k,lbl])=>{ const b=document.createElement('button'); b.className=k; b.textContent=lbl;
+      if(state.achievements[subj]===lbl) b.classList.add('sel');  // 진단/기존 반영
+      b.onclick=()=>{ state.achievements[subj]=lbl; [...box.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); };
+      box.appendChild(b); });
+    row.appendChild(box); wrap.appendChild(row);
+  });
+}
+async function loadActivities(){
+  const data=await (await fetch('/api/activities')).json();
+  const mk=o=>{ const b=document.createElement('button'); b.className='opt'; b.textContent=o.label;
+    b.onclick=()=>{ b.classList.toggle('sel'); state.picks.has(o.id)?state.picks.delete(o.id):state.picks.add(o.id); }; return b; };
+  const ao=$('#actOpts'); ao.innerHTML=''; data.interests.forEach(o=>ao.appendChild(mk(o)));
+  const so=$('#styOpts'); so.innerHTML=''; data.styles.forEach(o=>so.appendChild(mk(o)));
+}
+async function loadExtracurriculars(){
+  const data=await (await fetch('/api/extracurriculars')).json();
+  const wrap=$('#exOpts'); wrap.innerHTML='';
+  data.categories.forEach(cat=>{
+    const items=data.options.filter(o=>o.category===cat); if(!items.length) return;
+    const h=document.createElement('div'); h.style.cssText='font-size:12px;font-weight:800;color:var(--muted);margin:8px 0 4px'; h.textContent=cat;
+    wrap.appendChild(h);
+    const box=document.createElement('div'); box.className='opts';
+    items.forEach(o=>{ const b=document.createElement('button'); b.className='opt'; b.textContent=o.label;
+      if(state.activities.has(o.id)) b.classList.add('sel');
+      b.onclick=()=>{ b.classList.toggle('sel'); state.activities.has(o.id)?state.activities.delete(o.id):state.activities.add(o.id); };
+      box.appendChild(b); });
+    wrap.appendChild(box);
+  });
+}
+
+// 미니 진단(BKT) → 성취도 반영
+async function loadDiagnostic(){
+  const box=$('#diagBox'); box.innerHTML='<span class="muted">문항 불러오는 중…</span>';
+  const d=await post('/api/diagnostic');
+  if(!d.items || !d.items.length){ box.innerHTML='<span class="muted">'+esc(d.note||'이 나이대는 진단이 없어요.')+'</span>'; return; }
+  let s='';
+  d.items.forEach((it,idx)=>{ s+=`<div class="q"><div class="qt">${idx+1}. [${esc(it.subject)}] ${esc(it.question)}</div><div class="opts">`;
+    it.options.forEach((o,oi)=>{ s+=`<button type="button" class="opt diagopt" data-item="${it.id}" data-choice="${oi}">${esc(o)}</button>`; });
+    s+=`</div></div>`; });
+  s+=`<button class="btn" id="gradeDiag" style="margin-top:8px">채점 → 성취도 반영</button><div id="diagResult"></div>`;
+  box.innerHTML=s;
+  box.querySelectorAll('.diagopt').forEach(b=>b.onclick=()=>{
+    box.querySelectorAll('.diagopt[data-item="'+b.dataset.item+'"]').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); });
+  $('#gradeDiag').onclick=gradeDiagnostic;
+}
+async function gradeDiagnostic(){
+  const chosen=[...$('#diagBox').querySelectorAll('.diagopt.sel')].map(b=>({item_id:b.dataset.item, choice:parseInt(b.dataset.choice,10)}));
+  if(!chosen.length){ alert('문항을 풀어주세요.'); return; }
+  const m=await (await fetch('/api/mastery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({answers:chosen})})).json();
+  state.diagDone=true;
+  let s='<div class="mode" style="background:#6c5ce7;margin-top:6px">✅ 진단 반영됨</div>';
+  m.subjects.forEach(su=>{ state.achievements[su.subject]=su.level;
+    s+=`<div class="opt-line">${esc(su.subject)} 숙련 <b>${Math.round(su.mastery*100)}%</b>(${esc(su.level)}) · 또래 백분위 ~${su.percentile} · 적정난이도 ${esc(su.recommended_difficulty)} · 복습 <b>D-${su.review_in_days}</b></div>`; });
+  $('#diagResult').innerHTML=s;
+  renderAchv();  // 성취도 버튼에 반영
+}
+
+// 게임화(스트릭·뱃지) + 부모 리포트
+function gamify(){
+  const nm=state.name||'우리아이', key='edupath_days_'+nm;
+  let days=[]; try{ days=JSON.parse(localStorage.getItem(key)||'[]'); }catch(e){}
+  const today=new Date().toISOString().slice(0,10);
+  if(!days.includes(today)) days.push(today);
+  days=days.slice(-90); try{ localStorage.setItem(key, JSON.stringify(days)); }catch(e){}
+  const set=new Set(days); let streak=0, d=new Date();
+  for(;;){ const s=d.toISOString().slice(0,10); if(set.has(s)){ streak++; d.setDate(d.getDate()-1); } else break; }
+  const badges=['🎯 첫걸음'];
+  if(streak>=3) badges.push('🔥 3일 연속'); if(streak>=7) badges.push('🔥 7일 연속');
+  if(Object.keys(state.achievements).length) badges.push('📝 성취 기록');
+  if(state.diagDone) badges.push('📚 진단 완료');
+  const hist=loadHistory();
+  if(hist.length>=2){ const c=hist[hist.length-1].ach||{}, p=hist[hist.length-2].ach||{};
+    if(Object.keys(c).some(k=>p[k]!=null && lvlNum(c[k])>lvlNum(p[k]))) badges.push('📈 성장'); }
+  return {streak, badges};
+}
+function gamifyHTML(){
+  const g=gamify();
+  return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+    <div><b>🔥 ${g.streak}일 연속</b> <span class="muted">방문</span></div>
+    <button class="btn ghost" style="width:auto;padding:8px 12px;margin:0" onclick="openReport()">📄 부모 리포트</button></div>
+    <div class="chips" style="margin-top:8px">${g.badges.map(b=>`<span class="chip pri">${b}</span>`).join('')}</div></div>`;
+}
+async function openReport(){
+  const r=await post('/api/report'); const nm=state.name||'우리아이';
+  let html=`<html><head><meta charset="utf-8"><title>EduPath 리포트</title>
+    <style>body{font-family:-apple-system,'Malgun Gothic',sans-serif;max-width:640px;margin:24px auto;color:#222;padding:0 16px}
+    h1{color:#6c5ce7;font-size:22px} h2{font-size:16px;border-bottom:2px solid #eee;padding-bottom:4px;margin-top:20px}
+    li{margin:3px 0} .sub{color:#666;margin:4px 0 16px} .foot{color:#999;font-size:12px;margin-top:24px}</style></head><body>`;
+  html+=`<h1>🎓 EduPath 학습 리포트</h1><div class="sub"><b>${esc(nm)}</b> · ${esc(r.grade)} · ${esc(r.persona_label)}</div>`;
+  r.sections.forEach(s=>{ html+=`<h2>${esc(s.title)}</h2><ul>${s.lines.map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`; });
+  html+=`<div class="foot">${esc(r.note)} · 생성 ${new Date().toISOString().slice(0,10)}</div></body></html>`;
+  const w=window.open('','_blank'); if(!w){ alert('팝업이 차단됐어요. 팝업 허용 후 다시 시도하세요.'); return; }
+  w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>{ try{w.print();}catch(e){} }, 400);
+}
+
+// 페르소나
+function personaHTML(p){
+  return `<div class="card"><h3>🧬 학습 페르소나</h3>
+    <div class="track" style="background:#6c5ce7">${esc(p.persona_label)}</div>
+    <div class="chips" style="margin-top:6px">${p.top_interests.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>
+    <div class="muted" style="margin-top:6px">${esc(p.note)}</div>
+    <div class="mode" style="margin-top:6px">🎯 ${esc(p.study_mode)}</div></div>`;
+}
+
+// 능력치 8각형 레이더 (프린세스 메이커식)
+function radarSVG(axes){
+  const cx=105, cy=105, R=80, n=axes.length;
+  const pt=(i,r)=>{ const a=(-90 + i*(360/n))*Math.PI/180; return [cx+r*Math.cos(a), cy+r*Math.sin(a)]; };
+  let g='';
+  // 격자 링(4단계)
+  [0.25,0.5,0.75,1].forEach(f=>{
+    const pts=axes.map((_,i)=>pt(i,R*f).map(x=>x.toFixed(1)).join(',')).join(' ');
+    g+=`<polygon points="${pts}" fill="none" stroke="#e7e7f3" stroke-width="1"/>`; });
+  // 축선 + 라벨
+  axes.forEach((a,i)=>{ const[x,y]=pt(i,R); g+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#ece9f8" stroke-width="1"/>`;
+    const[lx,ly]=pt(i,R+16); const anchor=Math.abs(lx-cx)<6?'middle':(lx>cx?'start':'end');
+    g+=`<text x="${lx.toFixed(1)}" y="${(ly+3).toFixed(1)}" font-size="9.5" fill="${a.top?'#5a49d6':'#7a7f9a'}" font-weight="${a.top?'800':'500'}" text-anchor="${anchor}">${esc(a.label)}</text>`; });
+  // 값 폴리곤
+  const vpts=axes.map((a,i)=>pt(i,R*(a.value/100)).map(x=>x.toFixed(1)).join(',')).join(' ');
+  g+=`<polygon points="${vpts}" fill="rgba(108,92,231,.25)" stroke="#6c5ce7" stroke-width="2"/>`;
+  axes.forEach((a,i)=>{ const[x,y]=pt(i,R*(a.value/100)); g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" fill="${a.top?'#00b894':'#6c5ce7'}"/>`; });
+  return `<svg class="radar" viewBox="0 0 210 210" role="img" aria-label="능력치 레이더">${g}</svg>`;
+}
+// 능력치 스냅샷 저장 → 지난 방문 대비 성장(Δ) 계산 (프린세스메이커식 성장 체감)
+function snapshotStats(st){
+  const nm=state.name||'우리아이', key='edupath_stats_'+nm;
+  let hist=[]; try{ hist=JSON.parse(localStorage.getItem(key)||'[]'); }catch(e){}
+  const today=new Date().toISOString().slice(0,10);
+  const cur={ date:today, overall:st.overall, axes:{} };
+  st.axes.forEach(a=>cur.axes[a.key]=a.value);
+  const prev=hist.length ? hist[hist.length-1] : null;
+  const delta={}; let overallD=0;
+  if(prev){ st.axes.forEach(a=>{ const d=a.value-(prev.axes[a.key]??a.value); if(d) delta[a.key]=d; });
+    overallD=st.overall-(prev.overall??st.overall); }
+  // 같은 날 재방문이면 마지막 스냅샷 갱신, 아니면 추가
+  if(prev && prev.date===today) hist[hist.length-1]=cur; else hist.push(cur);
+  try{ localStorage.setItem(key, JSON.stringify(hist.slice(-60))); }catch(e){}
+  return { delta, overallD, has:!!prev };
+}
+function statsHTML(st){
+  const gr=snapshotStats(st);
+  const dChip=v=>v>0?`<span style="color:var(--ok);font-weight:800">▲${v}</span>`:(v<0?`<span style="color:var(--warn)">▼${-v}</span>`:'');
+  let rows='';
+  st.axes.forEach(a=>{ const d=gr.delta[a.key]; rows+=`<div class="statrow ${a.top?'top':''}"><span>${esc(a.label)}</span>
+    <div class="statbar"><i style="width:${a.value}%"></i></div><b>${a.value}</b> ${d?dChip(d):''}</div>`; });
+  const sig = st.source_signals&&st.source_signals.length ? `<div class="muted" style="margin-top:6px">반영: ${st.source_signals.map(esc).join(' · ')}</div>` : '';
+  const grow = gr.has ? `<span class="chip" style="background:#eafaf3;color:#0a8">지난 방문 대비 종합 ${gr.overallD>0?'▲'+gr.overallD:(gr.overallD<0?'▼'+(-gr.overallD):'유지')}</span>` : '';
+  return `<div class="card"><h3>📊 능력치 스탯</h3>
+    <div class="track" style="background:linear-gradient(135deg,#6c5ce7,#8e7bf0);display:flex;justify-content:space-between;align-items:center">
+      <span>🏅 ${esc(st.title)}</span><span style="font-size:13px;opacity:.95">Lv.${st.overall} · ${esc(st.overall_level)}</span></div>
+    <div class="chips" style="margin-top:6px"><span class="chip">${esc(st.headline)}</span>${grow}</div>
+    <div class="statwrap" style="margin-top:8px">${radarSVG(st.axes)}<div class="statlist">${rows}</div></div>
+    ${st.top_axes.length?`<div class="chips" style="margin-top:8px"><span class="muted" style="align-self:center">강점</span>${st.top_axes.map(t=>`<span class="chip pri">${esc(t)}</span>`).join('')}</div>`:''}
+    ${st.growth_axes.length?`<div class="chips"><span class="muted" style="align-self:center">보강</span>${st.growth_axes.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`:''}
+    ${sig}<div class="muted" style="margin-top:6px">${esc(st.note)}</div></div>`;
+}
+
+// 사교육 테크트리 (스타크래프트식 진행 + 추천 루트 하이라이트)
+function techtreeHTML(tt){
+  let h=`<div class="card"><h3>🌳 사교육 테크트리 <span class="muted">(추천 루트 강조)</span></h3>`;
+  const meta=[];
+  if(tt.done_count) meta.push(`<span class="chip" style="background:#eef;color:#556">✅ 경험 ${tt.done_count}단계</span>`);
+  if(tt.budget_conscious) meta.push(`<span class="chip" style="background:#fff3cd;color:#7a5b00">💸 예산 절약 모드</span>`);
+  if(tt.recommended_tracks&&tt.recommended_tracks.length)
+    h+=`<div class="chips"><span class="muted" style="align-self:center">추천 계열</span>${tt.recommended_tracks.map(t=>`<span class="chip pri">${esc(t)}</span>`).join('')}${meta.join('')}</div>`;
+  h+=`<div class="tt">`;
+  tt.tracks.forEach(tr=>{
+    h+=`<div class="ttrack ${tr.recommended?'rec':''}"><div class="tlabel">${esc(tr.label)}</div><div class="tnodes">`;
+    tr.nodes.forEach(n=>{
+      const cls=n.done?'done':(n.recommended?'on':'');
+      const badge=n.done?'<span class="rbadge" style="background:#8a8fb0">완료</span>':(n.recommended?'<span class="rbadge">추천</span>':'');
+      h+=`<div class="tnode ${cls}">${badge}
+        <div class="tn">${n.done?'✅ ':''}${esc(n.label)}</div><div class="ta">${esc(n.age_hint)} · 비용 ${esc(n.cost_band)}</div>
+        ${n.free_alt?`<div class="tfree">무료대안: ${esc(short(n.free_alt,22))}</div>`:''}</div>`;
+    });
+    h+=`</div></div>`;
+  });
+  h+=`</div>`;
+  if(tt.route&&tt.route.length){
+    h+=`<div class="routebox"><b style="font-size:12.5px">🚩 지금 우리 아이 추천 루트</b>`;
+    tt.route.forEach(n=>{ h+=`<div class="rstep">• <b>${esc(n.label)}</b> <span class="muted">(${esc(n.age_hint)})</span> — ${esc(n.reason)}</div>`; });
+    h+=`</div>`;
+  }
+  h+=`<div class="muted" style="margin-top:6px">${esc(tt.note)}</div></div>`;
+  return h;
+}
+
+// 우리 동네 실제 학원 + 지도 + 맘카페 (지역 허브)
+function defRegion(){ return ($('#region')?.value||'').trim(); }
+function defSubject(){ return (state.weakSubject||'수학'); }
+function localCardShell(){
+  return `<div class="card"><h3>🏫 우리 동네 학원·지도·맘카페</h3>
+    <p class="hint">실제 학원 목록과 <b>지도</b>·<b>맘카페 후기</b>를 바로 연결해 드려요.</p>
+    <div class="rvform">
+      <input class="txt" id="lhRegion" maxlength="30" placeholder="지역 (예: 서울 노원 중계동)" value="${esc(defRegion())}" />
+      <input id="lhSubject" style="max-width:90px" maxlength="10" placeholder="과목" value="${esc(defSubject())}" />
+      <button onclick="loadLocalHub()">검색</button></div>
+    <div id="lhResult"><span class="muted">지역·과목을 넣고 검색을 눌러주세요.</span></div></div>`;
+}
+async function loadLocalHub(){
+  const box=$('#lhResult'); if(!box) return;
+  const region=($('#lhRegion')?.value||'').trim(), subject=($('#lhSubject')?.value||'수학').trim();
+  box.innerHTML='<span class="muted">불러오는 중…</span>';
+  try{
+    const d=await (await fetch('/api/local-hub?region='+encodeURIComponent(region)+'&subject='+encodeURIComponent(subject))).json();
+    let s='';
+    if(d.academies&&d.academies.length){
+      s+=`<div class="gt" style="margin:6px 0">실제 학원 <span class="muted">${d.live?'· 실시간':'· 스냅샷'}</span></div>`;
+      d.academies.forEach(a=>{ s+=`<div class="aca"><div class="top"><span class="nm">${esc(a.name)}</span>
+        <a class="lnk" href="${esc(a.map_url)}" target="_blank" rel="noopener">지도</a></div>
+        <div class="meta">${esc(a.category||'')}${a.address?' · '+esc(a.address):''}</div>
+        ${a.url?`<a class="lnk" href="${esc(a.url)}" target="_blank" rel="noopener">홈페이지·블로그</a>`:''}</div>`; });
+    } else {
+      s+=`<div class="muted">수집된 학원이 아직 없어요. 아래 지도·맘카페로 실시간 확인하세요.</div>`;
+    }
+    s+=`<div class="gt" style="margin:10px 0 4px">지도에서 보기</div><div class="chips">`
+      + d.map_links.map(l=>`<a class="chip pri" style="text-decoration:none" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('')+`</div>`;
+    s+=`<div class="gt" style="margin:10px 0 4px">엄마들 후기·커뮤니티</div><div class="chips">`
+      + d.community_links.map(l=>`<a class="chip" style="text-decoration:none" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('')+`</div>`;
+    s+=`<div class="src">출처: ${esc(d.source)} · ${esc(d.note)}</div>`;
+    box.innerHTML=s;
+  }catch(e){ box.innerHTML='<span class="muted">불러오지 못했어요.</span>'; }
+}
+
+// 엄마들 인앱 커뮤니티 (의견 나누기)
+const COMM_TOPICS=['전체','수학학원','영어','유아영어','사고력','예체능','진로','자유'];
+function commCardShell(){
+  const opts=COMM_TOPICS.map(t=>`<option>${t}</option>`).join('');
+  return `<div class="card"><h3>💬 엄마들 커뮤니티</h3>
+    <p class="hint">같은 지역·주제의 부모들과 정보를 나누고 의견을 남겨요.</p>
+    <div class="rvform">
+      <input class="txt" id="cmRegion" maxlength="30" placeholder="지역 (예: 서울 노원 중계동)" value="${esc(defRegion())}" />
+      <select id="cmTopic">${opts}</select>
+      <button onclick="loadCommunity()">보기</button></div>
+    <div id="cmList"><span class="muted">불러오는 중…</span></div>
+    <div class="rvbox" style="display:block;border-top:1px solid var(--line);margin-top:10px">
+      <div class="gt" style="margin:2px 0 6px">✏️ 새 글 쓰기</div>
+      <input id="cmNewTitle" maxlength="80" placeholder="제목" style="margin-bottom:6px" />
+      <textarea id="cmNewBody" maxlength="1000" placeholder="내용을 적어주세요 (상업/비방/개인정보 금지)" style="width:100%;min-height:64px;padding:10px;border:1.5px solid var(--line);border-radius:11px;font-size:14px;font-family:inherit"></textarea>
+      <div class="rvform" style="margin-top:6px">
+        <input id="cmNewAuthor" style="max-width:110px" maxlength="20" placeholder="별명(선택)" />
+        <button onclick="submitPost()">등록</button></div>
+    </div></div>`;
+}
+async function loadCommunity(){
+  const box=$('#cmList'); if(!box) return;
+  const region=($('#cmRegion')?.value||'').trim(), topic=($('#cmTopic')?.value||'').trim();
+  box.innerHTML='<span class="muted">불러오는 중…</span>';
+  try{
+    const d=await (await fetch('/api/community?region='+encodeURIComponent(region)+'&topic='+encodeURIComponent(topic))).json();
+    if(!d.posts.length){ box.innerHTML='<span class="muted">아직 글이 없어요. 첫 글을 남겨보세요!</span>'; return; }
+    box.innerHTML=d.posts.map(p=>postHTML(p)).join('')
+      + `<div class="src">${esc(d.note)}</div>`;
+  }catch(e){ box.innerHTML='<span class="muted">불러오지 못했어요.</span>'; }
+}
+function postHTML(p){
+  const cmts=(p.comments||[]).map(c=>`<div class="rv"><span class="rh">${esc(c.author)}</span> <span class="muted">${esc(c.date)}</span><br>${esc(c.text)}</div>`).join('');
+  return `<div class="aca"><div class="top"><span class="nm">${esc(p.title)}</span>
+      <span class="tag">${esc(p.topic)}</span></div>
+    <div class="meta">${esc(p.author)} · ${esc(p.region)} · ${esc(p.date)}</div>
+    <div style="font-size:13px;margin:6px 0;white-space:pre-wrap">${esc(p.body)}</div>
+    <div class="chips"><button class="chip" style="cursor:pointer;border:none" onclick="likePost('${esc(p.id)}',this)">🤍 공감 ${p.likes}</button>
+      <span class="muted" style="align-self:center">💬 ${(p.comments||[]).length}</span></div>
+    <div class="rvbox" style="display:block">${cmts}
+      <div class="rvform"><input class="txt" id="cmc-${esc(p.id)}" maxlength="300" placeholder="의견 달기" />
+        <input id="cmca-${esc(p.id)}" style="max-width:90px" maxlength="20" placeholder="별명" />
+        <button onclick="submitComment('${esc(p.id)}')">등록</button></div></div></div>`;
+}
+async function submitPost(){
+  const region=($('#cmRegion')?.value||'').trim()||'전체';
+  const topic=($('#cmTopic')?.value||'자유').trim();
+  const title=($('#cmNewTitle')?.value||'').trim(), body=($('#cmNewBody')?.value||'').trim();
+  if(!title||!body){ alert('제목과 내용을 입력하세요.'); return; }
+  const author=($('#cmNewAuthor')?.value||'').trim()||'익명맘';
+  try{
+    await fetch('/api/community',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({region,topic:topic==='전체'?'자유':topic,title,body,author})});
+    $('#cmNewTitle').value=''; $('#cmNewBody').value='';
+    loadCommunity();
+  }catch(e){ alert('등록에 실패했어요.'); }
+}
+async function submitComment(id){
+  const text=($('#cmc-'+id)?.value||'').trim(); if(!text){ alert('의견을 입력하세요.'); return; }
+  const author=($('#cmca-'+id)?.value||'').trim()||'익명맘';
+  try{ await fetch('/api/community/'+id+'/comment',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({author,text})}); loadCommunity();
+  }catch(e){ alert('등록에 실패했어요.'); }
+}
+async function likePost(id,btn){
+  try{ const r=await (await fetch('/api/community/'+id+'/like',{method:'POST'})).json();
+    if(r.ok&&btn) btn.textContent='💛 공감 '+r.likes;
+  }catch(e){}
+}
+
+// 마인드맵
+function mindmap(pw){
+  const ms=pw.milestones, n=ms.length;
+  const W=380, top=24, gap=Math.max(58,Math.min(74,260/Math.max(1,n-1)));
+  const H=top*2+(n-1)*gap+20, cy=H/2, cx=78, nx=196, nw=168;
+  let s=`<svg class="mind" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="inherit">`;
+  ms.forEach((m,i)=>{ const y=top+i*gap+14; s+=`<path d="M ${cx+58} ${cy} C ${cx+110} ${cy}, ${nx-30} ${y}, ${nx} ${y}" stroke="#cfc9f3" stroke-width="2" fill="none"/>`; });
+  s+=`<g><rect x="${cx-58}" y="${cy-26}" width="116" height="52" rx="14" fill="#00b894"/>
+    <text x="${cx}" y="${cy-4}" fill="#fff" font-size="11" font-weight="700" text-anchor="middle">추천 계열</text>
+    <text x="${cx}" y="${cy+12}" fill="#fff" font-size="10" text-anchor="middle">${esc(short(pw.recommended_track,12))}</text></g>`;
+  ms.forEach((m,i)=>{ const y=top+i*gap+14, cur=i===0;
+    s+=`<g><rect x="${nx}" y="${y-20}" width="${nw}" height="40" rx="12" fill="${cur?'#6c5ce7':'#efecff'}"/>
+      <text x="${nx+12}" y="${y-3}" fill="${cur?'#fff':'#3a3550'}" font-size="11.5" font-weight="700">${esc(m.stage)}${cur?' ·지금':''}</text>
+      <text x="${nx+12}" y="${y+12}" fill="${cur?'#e8e4ff':'#7a7f9a'}" font-size="10">${esc(short((m.focus||[])[0]||'',16))}</text></g>`; });
+  return s+`</svg>`;
+}
+
+// 성취도 이력 (브라우저 localStorage)
+const childKey=()=>'edupath_hist_'+(state.name||'우리아이');
+function loadHistory(){ try{ return JSON.parse(localStorage.getItem(childKey())||'[]'); }catch(e){ return []; } }
+function saveHistory(grade){
+  if(!Object.keys(state.achievements).length) return;  // 성취도 입력 없으면 저장 안 함
+  const hist=loadHistory();
+  const date=new Date().toISOString().slice(0,10);
+  hist.push({ date, age:state.age, grade, ach:{...state.achievements} });
+  try{ localStorage.setItem(childKey(), JSON.stringify(hist.slice(-20))); }catch(e){}
+}
+const lvlNum=l=>({부족:0,보통:1,잘함:2}[l] ?? -1);
+function historyHTML(){
+  const h=loadHistory(); if(!h.length) return '';
+  const recent=h.slice(-6).reverse();
+  let s=`<div class="card"><h3>📈 성취도 이력 — ${esc(state.name||'우리아이')}</h3>`;
+  recent.forEach((e,i)=>{
+    const prev=recent[i+1];
+    s+=`<div style="margin:7px 0"><b>${e.date}</b> <span class="muted">· ${e.grade}</span><div class="chips" style="margin-top:3px">`;
+    Object.entries(e.ach).forEach(([sub,lv])=>{
+      let arrow=''; if(prev&&prev.ach[sub]!=null){ const d=lvlNum(lv)-lvlNum(prev.ach[sub]); arrow=d>0?' ↑':d<0?' ↓':''; }
+      s+=`<span class="chip">${esc(sub)}: ${esc(lv)}${arrow}</span>`;
+    });
+    s+=`</div></div>`;
+  });
+  return s+`<div class="muted">결과를 볼 때마다 자동 저장돼요. 이 브라우저에만 보관(서버 전송 없음).</div></div>`;
+}
+const optLink=o=>o.url?`<a href="${esc(o.url)}" target="_blank" rel="noopener">${esc(o.name)}</a>`:esc(o.name);
+
+// ⑥ 학년 진급 알림 (재방문 시 추정)
+function gradeLabel(a){
+  const m={7:'초1',8:'초2',9:'초3',10:'초4',11:'초5',12:'초6',13:'중1',14:'중2',15:'중3',16:'고1',17:'고2'};
+  if(a<=2)return '영아'; if(a<=6)return '유치원'; if(a>=18)return '고3'; return m[a]||'';
+}
+function saveProfile(grade){
+  if(!state.name) return;
+  try{ localStorage.setItem('edupath_prof_'+state.name, JSON.stringify({age:state.age, year:new Date().getFullYear(), grade})); }catch(e){}
+}
+function checkPromotion(){
+  const cur=new Date().getFullYear(); let best=null;
+  for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i);
+    if(!k || !k.startsWith('edupath_prof_')) continue;
+    let p; try{ p=JSON.parse(localStorage.getItem(k)); }catch(e){ continue; }
+    if(!p||!p.year) continue;
+    const exAge=p.age+(cur-p.year), newG=gradeLabel(exAge);
+    if(cur>p.year && newG && newG!==p.grade && (!best || p.year>best.p.year))
+      best={ name:k.slice('edupath_prof_'.length), exAge, newG, p };
+  }
+  const el=$('#promoBanner');
+  if(best){
+    el.innerHTML=`🎉 <b>${esc(best.name)}</b>, 새 학년이 되었을 거예요 — <b>${best.newG}</b>. <u>새 학년 할 일 보기 →</u>`;
+    el.style.display='block';
+    el.onclick=()=>{ state.age=best.exAge; state.name=best.name; $('#childName').value=best.name; el.style.display='none'; setStep(1); loadPlan(); };
+  } else el.style.display='none';
+}
+
+// 생애주기 타임라인
+function lifecycleHTML(life){
+  let s=`<div class="card"><h3>🌱 전 생애주기 — 우리 아이는 지금 '${esc(life.current_label)}'</h3><div class="life">`;
+  life.stages.forEach(st=>{ s+=`<div class="lifeitem ${st.current?'cur':''}"><div class="ld"></div>
+    <div><b>${esc(st.label)}</b> <span class="muted">${esc(st.age_label)}</span>${st.current?' 📍':''}
+    <div class="muted">${esc(st.headline)}</div></div></div>`; });
+  return s+`</div></div>`;
+}
+
+// 동기화 코드(서버 저장/불러오기)
+async function loadSync(){
+  const code=($('#syncCode').value||'').trim(); if(!code){ alert('동기화 코드를 입력하세요.'); return; }
+  try{
+    const r=await fetch('/api/sync/'+encodeURIComponent(code));
+    if(r.status===404){ alert('해당 코드로 저장된 데이터가 없어요. 결과를 보면 자동 저장됩니다.'); return; }
+    const p=(await r.json()).payload||{}; const nm=p.name||'우리아이';
+    if(p.name){ $('#childName').value=p.name; state.name=p.name; }
+    if(p.hist) localStorage.setItem('edupath_hist_'+nm, JSON.stringify(p.hist));
+    if(p.prof) localStorage.setItem('edupath_prof_'+nm, JSON.stringify(p.prof));
+    alert('불러왔어요! 이름·이력이 복원됐습니다.'); checkPromotion();
+  }catch(e){ alert('불러오기 실패'); }
+}
+async function saveSync(){
+  const code=($('#syncCode').value||'').trim(); if(!code) return;
+  const nm=state.name||'우리아이';
+  let prof=null; try{ prof=JSON.parse(localStorage.getItem('edupath_prof_'+nm)||'null'); }catch(e){}
+  try{ await fetch('/api/sync/save',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({code, payload:{name:nm, hist:loadHistory(), prof}})}); }catch(e){}
+}
+
+// 학원 추천 + 리뷰
+function acaCard(p, sp){
+  const price=p.price===0?'문의':p.price.toLocaleString()+'원/월';
+  return `<div class="aca ${sp?'sp':''}">
+    <div class="top"><span class="nm">${esc(p.name)} ${sp?'<span class="adbadge">입점·광고</span>':''}</span>
+      <span class="star">★ ${p.rating} <span class="muted">(${p.review_count})</span></span></div>
+    <div class="meta">${esc(p.type)} · ${esc(p.region)} · ${esc(p.subjects.join('/'))} · ${price}</div>
+    <ul class="reasons">${p.reasons.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+    <span class="lnk" onclick="toggleReviews('${p.id}')">리뷰 ${p.review_count}개 보기·쓰기 ▾</span>
+    <div class="rvbox" id="rv-${p.id}"></div></div>`;
+}
+function academiesHTML(ac){
+  let h=`<div class="card"><h3>🏫 추천 학원 <span class="muted">(${esc(ac.region)})</span></h3>
+    <div class="muted">${esc(ac.note)}</div>`;
+  if(ac.sponsored.length){ h+=`<div class="gt" style="color:#c0760f;margin-top:8px">입점(광고)</div>`; ac.sponsored.forEach(p=>h+=acaCard(p,true)); }
+  if(ac.organic.length){ h+=`<div class="gt" style="margin-top:8px">일반 추천 (평점·매칭 순)</div>`; ac.organic.forEach(p=>h+=acaCard(p,false)); }
+  if(!ac.sponsored.length && !ac.organic.length) h+=`<div class="muted">조건에 맞는 예시 학원이 없어요.</div>`;
+  return h+`<div class="src">⚠️ 표시된 학원·평점은 <b>예시 데이터</b>입니다(실제 업체 아님). 운영 시 입점사 실데이터로 대체.</div></div>`;
+}
+async function toggleReviews(id){
+  const box=document.getElementById('rv-'+id); if(!box) return;
+  if(box.style.display==='block'){ box.style.display='none'; return; }
+  box.style.display='block'; box.innerHTML='<span class="muted">불러오는 중…</span>';
+  try{
+    const d=await (await fetch('/api/academies/'+id+'/reviews')).json();
+    let s=`<div class="muted">평균 ★ ${d.avg_rating} · 리뷰 ${d.count}개</div>`;
+    s+=d.reviews.map(r=>`<div class="rv"><span class="rh">[${esc(r.target_type)}] ${esc(r.target_name)} ★${r.rating}</span> <span class="muted">${esc(r.date)}</span><br>${esc(r.text)}</div>`).join('');
+    s+=`<div class="rvform">
+      <select id="rvtype-${id}"><option>학원</option><option>선생님</option><option>강의</option></select>
+      <select id="rvr-${id}"><option value="5">★5</option><option value="4">★4</option><option value="3">★3</option><option value="2">★2</option><option value="1">★1</option></select>
+      <input class="txt" id="rvt-${id}" maxlength="200" placeholder="평가를 남겨주세요 (선생님·강의)" />
+      <button onclick="submitReview('${id}')">등록</button></div>`;
+    box.innerHTML=s;
+  }catch(e){ box.innerHTML='<span class="muted">리뷰를 불러오지 못했어요.</span>'; }
+}
+async function submitReview(id){
+  const text=(document.getElementById('rvt-'+id).value||'').trim();
+  if(!text){ alert('내용을 입력하세요.'); return; }
+  const rating=parseInt(document.getElementById('rvr-'+id).value,10);
+  const target_type=document.getElementById('rvtype-'+id).value;
+  try{
+    await fetch('/api/reviews',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({academy_id:id, rating, text, target_type, target_name:''})});
+    toggleReviews(id); toggleReviews(id);  // 닫았다 다시 열어 새로고침
+  }catch(e){ alert('등록 실패'); }
+}
+
+// 적응형 학습계획 렌더 + 이력 대비 적응 메모
+function adaptNote(){
+  const h=loadHistory(); if(h.length<2) return '';
+  const cur=h[h.length-1].ach||{}, prev=h[h.length-2].ach||{};
+  const ups=[],downs=[];
+  Object.keys(cur).forEach(s=>{ if(prev[s]!=null){ const d=lvlNum(cur[s])-lvlNum(prev[s]); if(d>0)ups.push(s); else if(d<0)downs.push(s); } });
+  if(!ups.length && !downs.length) return '';
+  let t='📈 지난 기록 대비 — ';
+  if(ups.length) t+=`${ups.join(', ')} 향상↑(다음 단계로) `;
+  if(downs.length) t+=`${downs.join(', ')} 하락↓(기초 점검) `;
+  return `<div class="mode" style="background:#00b894">${esc(t)}</div>`;
+}
+function planHTML2(pl){
+  let h=`<div class="card"><h3>📅 맞춤 학습 계획 <span class="muted">(주간·적응형)</span></h3>`;
+  if(pl.mode==='developmental'){
+    h+=`<div class="muted">이 시기는 시간표보다 매일의 놀이·대화·책읽기가 핵심이에요.</div>`;
+    pl.sessions.forEach(s=>{ h+=`<div class="rec"><div class="nm">${esc(s.subject)}</div>
+      <div class="muted">${mdb(s.focus)} · 🎯 ${esc(s.goal)}</div>
+      <div class="opt-line">자료: ${optLink(s.resource)}</div></div>`; });
+  } else {
+    h+=`<div class="gradeTag">주당 약 ${pl.total_weekly_hours}시간 (약점에 더 배분)</div>`;
+    h+=adaptNote();
+    pl.sessions.forEach(s=>{ h+=`<div class="rec"><div class="top"><span class="nm">${esc(s.subject)}</span>
+      <span class="tag">${esc(s.level)} · ${s.weekly_hours}h/주</span></div>
+      <div class="muted">${mdb(s.focus)}</div>
+      <div class="muted">🎯 ${esc(s.goal)}</div>
+      <div class="opt-line">자료: ${optLink(s.resource)} <span class="free-cost">${esc(s.resource.cost)}</span></div></div>`; });
+  }
+  if(pl.review && pl.review.length) h+=`<div class="tip">🔁 ${pl.review.map(esc).join(' · ')}</div>`;
+  h+=`<ul class="reasons">${pl.tips.map(t=>`<li>${mdb(t)}</li>`).join('')}</ul>`;
+  return h+`<div class="src">출처: <b>${esc(pl.source)}</b> · 갱신 ${esc(pl.updated)} · (LLM 호출 없는 규칙 엔진)</div></div>`;
+}
+
+// 결과
 async function showResult(){
-  const body=payload();
-  const opt={method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)};
-  const [rec,path,subj] = await Promise.all([
-    fetch('/api/recommend',opt).then(r=>r.json()),
-    fetch('/api/pathway',opt).then(r=>r.json()),
-    fetch('/api/subjects',opt).then(r=>r.json()),
-  ]);
-  render(rec,path,subj);
-  setStep(2);
+  state.name=($('#childName').value||'').trim();
+  const [plan,units,splan,achv,rec,path,subj,ai,careers,life,aca,persona,tt]=await Promise.all([
+    post('/api/grade-plan'),post('/api/units'),post('/api/plan'),post('/api/achievement'),post('/api/recommend'),
+    post('/api/pathway'),post('/api/subjects'),post('/api/ai-track'),post('/api/careers'),
+    post('/api/lifecycle'),post('/api/academies'),post('/api/persona'),post('/api/techtree')]);
+  state.weakSubject = (achv.weak && achv.weak.length) ? achv.weak[0].subject : (state.coreSubjects[0]||'수학');
+  saveHistory(plan.grade); saveProfile(plan.grade); saveSync();
+  render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,tt); setStep(3);
 }
-function render(rec,path,subj){
-  const I = rec.aptitude.interest, S = rec.aptitude.learning_style;
-  const top = Object.entries(I).sort((a,b)=>b[1]-a[1]).slice(0,3);
+function render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,tt){
+  const I=rec.aptitude.interest, pw=path.pathway, topI=Object.entries(I).sort((a,b)=>b[1]-a[1]).slice(0,3);
   let h='';
-  // 적성 요약
+  // 0) 게임화(스트릭·뱃지) + 리포트
+  h+=gamifyHTML();
+  // 0.3) 생애주기 타임라인
+  h+=lifecycleHTML(life);
+  // 0.5) 학습 페르소나
+  h+=personaHTML(persona);
+  // 0.7) 능력치 스탯(8각 레이더) + 사교육 테크트리 (육성 엔진)
+  if(tt&&tt.stat) h+=statsHTML(tt.stat);
+  if(tt&&tt.tracks) h+=techtreeHTML(tt);
+  // 1) 학년별 할 일 (주 기능)
+  h+=`<div class="card">${planHTML(plan)}</div>`;
+  // 1.1) 적응형 주간 학습계획
+  h+=planHTML2(splan);
+  // 1.2) 단원 + 무료강의 링크
+  h+=unitsHTML(units);
+  // 1.5) 성취도 이력 (있으면)
+  h+=historyHTML();
+  // 2) 과목 보완 추천 (무료·저렴 링크)
+  h+=`<div class="card"><h3>📌 과목 보완 추천</h3><div class="muted">${achv.note}</div>`;
+  if(achv.weak.length){
+    achv.weak.forEach(w=>{
+      h+=`<div class="rec"><div class="top"><span class="nm">${w.subject}</span><span class="lvlbadge ${w.level}">${w.level}</span></div>
+        <div class="muted" style="margin:4px 0">${w.action}</div>
+        <div style="margin-top:4px"><b style="font-size:12.5px;color:var(--free)">무료·저렴</b>
+          ${w.free.map(o=>`<div class="opt-line">• ${optLink(o)} <span class="free-cost">${o.cost}</span> <span class="muted">${esc(o.note)}</span></div>`).join('')}</div>
+        <div style="margin-top:4px"><b style="font-size:12.5px;color:var(--muted)">학원·인강</b>
+          ${w.paid.map(o=>`<div class="opt-line">• ${optLink(o)} <span class="paid-cost">${o.cost}</span></div>`).join('')}</div>
+      </div>`;
+    });
+  }
+  if(achv.strong.length) h+=`<div class="muted" style="margin-top:6px">잘하는 과목: ${achv.strong.join(', ')} — 심화로 강점 키우기 👍</div>`;
+  h+=`</div>`;
+  // 2.5) 추천 학원 (필요한 사교육)
+  h+=academiesHTML(aca);
+  // 2.6) 우리 동네 실제 학원 · 지도 · 맘카페  +  2.7) 엄마들 커뮤니티
+  h+=localCardShell();
+  h+=commCardShell();
+  // 3) AI 시대 역량
+  h+=`<div class="card"><h3>🤖 AI 시대 역량 — ${ai.stage}</h3><div style="font-weight:700;font-size:14px">${ai.headline}</div>
+    <ul class="glist">${ai.skills.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+    <div class="chips">${ai.tools.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>
+    <div class="tip">💡 ${esc(ai.tip)}</div></div>`;
+  // 4) 유망 커리어
+  h+=`<div class="card"><h3>🚀 유망 커리어 추천</h3><div class="muted">${careers.note}</div>`;
+  careers.careers.forEach(c=>{ h+=`<div class="rec"><div class="top"><span class="nm">${c.name}</span><span class="tag">${c.field}</span></div>
+    <div class="muted">📈 ${c.outlook}</div>
+    <ul class="reasons">${c.fit_reasons.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+    <div class="muted" style="margin-top:4px"><b>지금 준비:</b> ${c.prepare_now.join(', ')}</div>
+    <div class="chips" style="margin-top:4px">${c.key_subjects.map(s=>`<span class="subj">${esc(s)}</span>`).join('')}</div></div>`; });
+  h+=`</div>`;
+  // 5) 마인드맵
+  h+=`<div class="card"><h3>🧠 진로 마인드맵</h3>${mindmap(pw)}<div class="muted" style="margin-top:6px">${(pw.rationale||[]).join(' ')}</div></div>`;
+  // 6) 적성
   h+=`<div class="card"><h3>🧭 우리 아이 적성</h3><div class="chips">`
-    + top.map((t,i)=>`<span class="chip ${i===0?'pri':''}">${RIASEC[t[0]]}</span>`).join('') + `</div><div class="riasec">`;
+    + topI.map((t,i)=>`<span class="chip ${i===0?'pri':''}">${RIASEC[t[0]]}</span>`).join('')+`</div><div class="riasec">`;
   Object.entries(I).forEach(([k,v])=>{ h+=`<div class="row"><span>${RIASEC[k]}</span><div class="bar"><i style="width:${Math.round(v*100)}%"></i></div></div>`; });
   h+=`</div><div class="mode">🎯 ${rec.study_mode}</div></div>`;
-  // 로드맵
-  const pw=path.pathway;
-  h+=`<div class="card"><h3>🗺️ 교육 로드맵</h3><div class="track">추천 진로 계열 · ${pw.recommended_track}</div>`;
-  h+=`<div class="muted" style="margin:8px 0">${(pw.rationale||[]).join(' · ')}</div><div class="tl">`;
-  pw.milestones.forEach(m=>{
-    h+=`<div class="ms"><div class="st">${m.stage}</div>
-      <div class="chips">${m.focus.map(f=>`<span class="chip">${f}</span>`).join('')}</div>
-      <div class="muted">활동: ${(m.activities||[]).join(', ')||'-'}</div>
-      ${m.decision?`<div class="decision">⚑ ${m.decision}</div>`:''}</div>`;
-  });
-  h+=`</div></div>`;
-  // 추천 커리큘럼
-  h+=`<div class="card"><h3>📚 ${rec.stage} 추천 커리큘럼</h3><div class="muted">핵심 역량: ${(rec.stage_competencies||[]).join(', ')}</div>`;
-  (rec.recommendations||[]).slice(0,6).forEach(r=>{
-    const cost=r.cost===0?'무료':r.cost.toLocaleString()+'원';
-    h+=`<div class="rec"><div class="top"><span class="nm">${r.name}</span><span class="tag">${TYPE_LABEL[r.type]||r.type}</span></div>
-      <div class="muted">${r.area} · <span class="cost">${cost}</span></div>
-      <ul class="reasons">${r.reasons.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
-  });
-  h+=`</div>`;
-  // 고교 과목 추천
+  // 7) 고교 과목 (고등만 강조, 그 외 참고)
   h+=`<div class="card"><h3>🎒 고교 과목 추천 <span class="muted">(2022 개정)</span></h3><div class="muted">${subj.note}</div>`;
-  Object.entries(subj.groups).forEach(([type,list])=>{
-    if(!list.length) return;
-    h+=`<div class="subj-group"><div class="gt">${type}</div>`
-      + list.map(s=>`<span class="subj">${s.name}</span>`).join('') + `</div>`;
-  });
+  Object.entries(subj.groups).forEach(([t,list])=>{ if(!list.length)return;
+    h+=`<div style="margin:8px 0"><div style="font-size:13px;font-weight:800;color:var(--pri-d);margin-bottom:6px">${t}</div>`
+      +list.map(s=>`<span class="subj">${esc(s.name)}</span>`).join('')+`</div>`; });
   h+=`</div>`;
   $('#result').innerHTML=h;
+  loadLocalHub(); loadCommunity();
 }
 
 // 이벤트
-$('#toSurvey').onclick=()=>{ setStep(1); if(!state.questions.length) loadSurvey(); };
-$('#backTo0').onclick=()=>setStep(0);
+$('#toPlan').onclick=()=>{ setStep(1); loadPlan(); };
+$('#toInput').onclick=()=>{ setStep(2); renderAchv(); if(!$('#actOpts').children.length) loadActivities(); if(!$('#exOpts').children.length) loadExtracurriculars(); };
+$('#toResultDirect').onclick=()=>{ state.picks.clear(); state.activities.clear(); state.achievements={}; showResult(); };
+$('#back0').onclick=()=>setStep(0);
+$('#back1').onclick=()=>setStep(1);
 $('#toResult').onclick=showResult;
-$('#restart').onclick=()=>{ state.answers={}; updateCount(); document.querySelectorAll('.scale .sel').forEach(b=>b.classList.remove('sel')); setStep(0); };
+$('#restart').onclick=()=>{ state.picks.clear(); state.activities.clear(); state.achievements={}; setStep(0); };
+$('#loadSync').onclick=loadSync;
+$('#startDiag').onclick=loadDiagnostic;
 
 renderAges();
+checkPromotion();
 </script>
 </body>
 </html>

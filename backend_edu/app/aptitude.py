@@ -91,12 +91,80 @@ def score_survey(answers: list[SurveyAnswer]) -> AptitudeProfile:
     )
 
 
+# ── 쉬운 진단(선택형) ─────────────────────────────────────────────
+# 1~5 척도가 정량적으로 답하기 어렵다는 피드백 → "해당되는 것 고르기" 방식.
+@dataclass(frozen=True)
+class ActivityOption:
+    id: str
+    label: str
+    dims: tuple[str, ...]   # RIASEC 흥미 차원 또는 학습성향 차원
+    kind: str               # "interest" | "style"
+
+
+# 관심 활동(복수 선택) → 흥미(RIASEC)
+ACTIVITY_OPTIONS: list[ActivityOption] = [
+    ActivityOption("act_sci", "🔬 실험하고 원리 파헤치기", ("investigative",), "interest"),
+    ActivityOption("act_math", "🧮 수학·논리 문제 풀기", ("investigative", "conventional"), "interest"),
+    ActivityOption("act_make", "🛠️ 손으로 만들고 조립·고치기", ("realistic",), "interest"),
+    ActivityOption("act_comp", "💻 컴퓨터·코딩·디지털 만들기", ("realistic", "investigative"), "interest"),
+    ActivityOption("act_art", "🎨 그림·음악으로 표현하기", ("artistic",), "interest"),
+    ActivityOption("act_write", "✍️ 글쓰기·독서·토론", ("artistic", "social"), "interest"),
+    ActivityOption("act_help", "🤝 사람 돕고 가르치기", ("social",), "interest"),
+    ActivityOption("act_lead", "🗣️ 발표·설득하고 이끌기", ("enterprising",), "interest"),
+    ActivityOption("act_plan", "💼 기획·돈 관리·창업 상상", ("enterprising", "conventional"), "interest"),
+    ActivityOption("act_org", "📋 정리·계획·꼼꼼한 작업", ("conventional",), "interest"),
+    ActivityOption("act_social", "🌍 사회·역사·세상 일에 관심", ("social", "investigative"), "interest"),
+    ActivityOption("act_body", "⚽ 운동·몸으로 하는 활동", ("realistic",), "interest"),
+]
+
+# 학습성향(해당되면 선택)
+STYLE_OPTIONS: list[ActivityOption] = [
+    ActivityOption("sty_self", "스스로 계획을 세워 공부하는 편", ("self_direction",), "style"),
+    ActivityOption("sty_collab", "혼자보다 친구들과 함께 할 때 더 잘함", ("collaboration",), "style"),
+    ActivityOption("sty_analytic", "암기보다 원리를 이해하는 걸 좋아함", ("analytical",), "style"),
+]
+
+_OPTION_BY_ID = {o.id: o for o in ACTIVITY_OPTIONS + STYLE_OPTIONS}
+
+
+def score_activities(selected_ids: list[str]) -> AptitudeProfile:
+    """선택한 관심활동·학습성향 → 적성 프로필. 선택 안 한 차원은 0.5(중립)."""
+    interest_counts: dict[str, int] = {d: 0 for d in RIASEC_DIMENSIONS}
+    style_hit: dict[str, bool] = {d: False for d in LEARNING_STYLE_DIMENSIONS}
+    for sid in selected_ids:
+        opt = _OPTION_BY_ID.get(sid)
+        if opt is None:
+            continue
+        if opt.kind == "interest":
+            for d in opt.dims:
+                if d in interest_counts:
+                    interest_counts[d] += 1
+        else:
+            for d in opt.dims:
+                if d in style_hit:
+                    style_hit[d] = True
+
+    max_count = max(interest_counts.values())
+    interest = {
+        d: round(0.5 + 0.5 * (c / max_count), 4) if max_count else 0.5
+        for d, c in interest_counts.items()
+    }
+    style = {d: (0.85 if hit else 0.5) for d, hit in style_hit.items()}
+    return AptitudeProfile(
+        interest=InterestVector(**interest), learning_style=LearningStyle(**style)
+    )
+
+
 def resolve_aptitude(
-    survey: list[SurveyAnswer], explicit: AptitudeProfile | None
+    survey: list[SurveyAnswer],
+    explicit: AptitudeProfile | None,
+    interests: list[str] | None = None,
 ) -> AptitudeProfile:
-    """명시 프로필 우선, 없으면 설문 계산, 둘 다 없으면 중립."""
+    """우선순위: 명시 프로필 > 리커트 설문 > 관심활동 선택 > 중립."""
     if explicit is not None:
         return explicit
     if survey:
         return score_survey(survey)
+    if interests:
+        return score_activities(interests)
     return AptitudeProfile()

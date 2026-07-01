@@ -152,7 +152,7 @@ def summarize_study_mode(style: LearningStyle) -> str:
 
 def recommend(profile: StudentProfile, top_k: int = 8) -> RecommendationResponse:
     """프로필 → 커리큘럼 추천. 콜드스타트(데이터 0)에서도 동작."""
-    aptitude = resolve_aptitude(profile.survey, profile.aptitude)
+    aptitude = resolve_aptitude(profile.survey, profile.aptitude, profile.interests)
     stage = get_stage(profile.age_years)
 
     candidates = resources_for_age(profile.age_years)

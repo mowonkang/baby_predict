@@ -74,6 +74,125 @@ def test_subjects_endpoint():
     assert career  # 비어있지 않아야
 
 
+def test_guide_endpoint():
+    res = client.post("/api/guide", json={"age_years": 17})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["stage"] == "고등"
+    assert body["study"] and body["prepare"] and body["headline"]
+
+
+def test_activities_endpoint():
+    res = client.get("/api/activities")
+    assert res.status_code == 200
+    body = res.json()
+    assert len(body["interests"]) >= 8
+    assert len(body["styles"]) >= 1
+    assert all("id" in o and "label" in o for o in body["interests"])
+
+
+def test_recommend_with_interests():
+    res = client.post("/api/recommend", json={"age_years": 16, "interests": ["act_sci", "act_math"]})
+    assert res.status_code == 200
+    assert res.json()["aptitude"]["interest"]["investigative"] == 1.0
+
+
+def test_ai_track_endpoint():
+    res = client.post("/api/ai-track", json={"age_years": 14})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["stage"] == "중등"
+    assert body["skills"] and body["tip"]
+
+
+def test_careers_endpoint():
+    res = client.post("/api/careers", json={"age_years": 16, "interests": ["act_sci", "act_math", "act_comp"]})
+    assert res.status_code == 200
+    body = res.json()
+    assert len(body["careers"]) >= 1
+    c = body["careers"][0]
+    assert c["name"] and c["prepare_now"] and c["key_subjects"] and c["outlook"]
+
+
+def test_grade_plan_endpoint():
+    res = client.post("/api/grade-plan", json={"age_years": 9})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["grade"] == "초3"
+    assert body["todo"] and body["subjects"]
+
+
+def test_achievement_endpoint():
+    res = client.post("/api/achievement", json={
+        "age_years": 14, "achievements": {"수학": "부족", "국어": "잘함"}})
+    assert res.status_code == 200
+    body = res.json()
+    assert any(w["subject"] == "수학" for w in body["weak"])
+    assert "국어" in body["strong"]
+    math = next(w for w in body["weak"] if w["subject"] == "수학")
+    assert math["free"] and math["paid"]
+
+
+def test_grades_list():
+    res = client.get("/api/grades")
+    assert res.status_code == 200
+    assert len(res.json()["grades"]) >= 12
+
+
+def test_lifecycle_endpoint():
+    res = client.post("/api/lifecycle", json={"age_years": 14})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["current_label"] == "중등"
+    assert any(s["current"] for s in body["stages"])
+
+
+def test_academies_endpoint():
+    res = client.post("/api/academies", json={
+        "age_years": 12, "region": "서울 강남", "achievements": {"수학": "부족"}})
+    assert res.status_code == 200
+    body = res.json()
+    assert "sponsored" in body and "organic" in body
+    picks = body["sponsored"] + body["organic"]
+    assert picks and all("rating" in p for p in picks)
+
+
+def test_review_submit_and_read():
+    s = client.post("/api/reviews", json={"academy_id": "A003", "rating": 4,
+                                          "text": "API 테스트 리뷰", "target_type": "선생님", "target_name": "쌤"})
+    assert s.status_code == 200
+    r = client.get("/api/academies/A003/reviews")
+    assert r.status_code == 200
+    assert any("API 테스트" in rv["text"] for rv in r.json()["reviews"])
+
+
+def test_plan_endpoint():
+    res = client.post("/api/plan", json={"age_years": 14, "weekly_hours": 10,
+                                         "achievements": {"수학": "부족", "영어": "잘함"}})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["mode"] == "academic" and body["sessions"]
+
+
+def test_diagnostic_and_mastery_flow():
+    d = client.post("/api/diagnostic", json={"age_years": 9})
+    assert d.status_code == 200
+    items = d.json()["items"]
+    assert items and all("options" in it for it in items)
+    # 수학 문항에 정답(=answer index) 대신 임의 선택으로 mastery 흐름 확인
+    math = [it for it in items if it["subject"] == "수학"]
+    answers = [{"item_id": it["id"], "choice": 1} for it in math]
+    m = client.post("/api/mastery", json={"answers": answers})
+    assert m.status_code == 200
+    assert any(s["subject"] == "수학" for s in m.json()["subjects"])
+
+
+def test_persona_endpoint():
+    res = client.post("/api/persona", json={"age_years": 14, "interests": ["act_sci", "act_math"]})
+    assert res.status_code == 200
+    assert "학습자" in res.json()["persona_label"]
+
+
 def test_recommend_validation_error():
     # 만 나이 범위 초과 → 422
     res = client.post("/api/recommend", json={"age_years": 999})

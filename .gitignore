@@ -11,3 +11,6 @@ env/
 .DS_Store
 .idea/
 .vscode/
+
+# 런타임 동기화 저장소(서버)
+backend_edu/data/
