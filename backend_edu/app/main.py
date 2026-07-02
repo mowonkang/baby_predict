@@ -97,6 +97,10 @@ app = FastAPI(
     description="학생 적성·학령 기반 커리큘럼 추천 + 교육 path 엔진 (MVP)",
 )
 
+# 응답 압축(70KB HTML·대형 JSON) — 모바일 체감 속도 개선
+from fastapi.middleware.gzip import GZipMiddleware
+app.add_middleware(GZipMiddleware, minimum_size=1024)
+
 _STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 
@@ -262,6 +266,13 @@ def post_temperament(profile: StudentProfile) -> TemperamentProfile:
 def post_projection(profile: StudentProfile) -> ProjectionResponse:
     """예상 능력치 전망 — 성장도표 개념 + Gagné DMGT 촉매 논리(낙관/기본/보수 3밴드, 참고용)."""
     return build_projection(profile)
+
+
+@app.post("/api/summary")
+def post_summary(profile: StudentProfile) -> dict:
+    """결과 화면 전 섹션을 **한 번에** 계산(기존 16회 호출 → 1회). 무과금."""
+    from .summary import build_summary
+    return build_summary(profile)
 
 
 @app.get("/api/frameworks", response_model=FrameworksResponse)

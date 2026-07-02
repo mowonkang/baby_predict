@@ -16,7 +16,7 @@ backend_edu/
 │  ├─ pathway.py       # 적성 → 미취학~대학 교육 path 생성기
 │  └─ main.py          # FastAPI 엔드포인트
 ├─ static/index.html   # 데모 UI (적성 진단 → 추천 + 로드맵 타임라인)
-└─ tests/              # pytest (66 cases)
+└─ tests/              # pytest (71 cases)
 ```
 
 ## 실행
@@ -39,6 +39,7 @@ uvicorn app.main:app --reload
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
 | GET | `/health` | 헬스체크 |
+| POST | `/api/summary` | **결과 전 섹션 통합 1회 호출**(기존 16회 → 1회, 8.5배 빠름) — GZip 압축 |
 | POST | `/api/grade-plan` | 나이/학년 → **이 학년에 할 것**(유치원~고3, 인문계) + 핵심 과목 |
 | POST | `/api/achievement` | 과목별 수준(잘함/보통/부족) → **보완 과목 + 학원·무료/저렴 교육 추천**(학교급별 자원·실제 링크) |
 | POST | `/api/lifecycle` | 나이 → **전 생애주기 타임라인**(영아~대학·진로) + 현재 위치 |

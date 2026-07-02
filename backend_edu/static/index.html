@@ -939,11 +939,23 @@ function planHTML2(pl){
 // 결과
 async function showResult(){
   state.name=($('#childName').value||'').trim();
-  const [plan,units,splan,achv,rec,path,subj,ai,careers,life,aca,persona,tt,cog,proj,fw]=await Promise.all([
-    post('/api/grade-plan'),post('/api/units'),post('/api/plan'),post('/api/achievement'),post('/api/recommend'),
-    post('/api/pathway'),post('/api/subjects'),post('/api/ai-track'),post('/api/careers'),
-    post('/api/lifecycle'),post('/api/academies'),post('/api/persona'),post('/api/techtree'),post('/api/cognitive'),
-    post('/api/projection'),fetch('/api/frameworks').then(r=>r.json())]);
+  // 즉시 로딩 표시(체감 속도)
+  $('#result').innerHTML='<div class="card"><h3>🔎 분석 중…</h3><div class="muted">능력치·테크트리·전망을 계산하고 있어요.</div></div>';
+  setStep(3);
+  // 단일 통합 호출(기존 16회 → 1회) — 실패 시 재시도 UI(견고성)
+  let d;
+  try{
+    d=await post('/api/summary');
+    if(!d || !d.grade_plan) throw new Error('bad payload');
+  }catch(e){
+    $('#result').innerHTML=`<div class="card"><h3>😢 결과를 불러오지 못했어요</h3>
+      <div class="muted">네트워크 상태를 확인해 주세요. 서버가 켜져 있는지도 확인해 주세요.</div>
+      <button class="btn" style="margin-top:10px" onclick="showResult()">다시 시도</button></div>`;
+    setStep(3); return;
+  }
+  const plan=d.grade_plan, units=d.units, splan=d.study_plan, achv=d.achievement, rec=d.recommend,
+        path=d.pathway, subj=d.subjects, ai=d.ai_track, careers=d.careers, life=d.lifecycle,
+        aca=d.academies, persona=d.persona, tt=d.techtree, cog=d.cognitive, proj=d.projection, fw=d.frameworks;
   state.weakSubject = (achv.weak && achv.weak.length) ? achv.weak[0].subject : (state.coreSubjects[0]||'수학');
   saveHistory(plan.grade); saveProfile(plan.grade); saveSync();
   render(life,persona,plan,units,splan,achv,aca,ai,careers,rec,path,subj,tt,cog,proj,fw); setStep(3);

@@ -76,7 +76,7 @@ pytest -q                       # 테스트 17건
 ```bash
 cd backend_edu && pip install -r requirements.txt
 uvicorn app.main:app --reload   # 앱: http://localhost:8000/
-pytest -q                       # 테스트 156건
+pytest -q                       # 테스트 161건
 ```
 
 자세한 내용은 [backend_edu/README.md](backend_edu/README.md) 참조.
