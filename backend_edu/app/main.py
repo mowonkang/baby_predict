@@ -41,14 +41,20 @@ from .stats import build_stats
 from .techtree import build_techtree
 from .extracurricular import CATEGORIES, EXTRACURRICULARS
 from .local import build_local_hub
-from . import cognitive, community, levels, subskill
+from . import cognitive, community, levels, subskill, temperament
+from .frameworks import all_frameworks
+from .projection import build_projection
 from .models import (
     AchievementResponse,
     AiTrackResponse,
     CareersResponse,
     CognitiveItemsResponse,
     CognitiveProfile,
+    FrameworksResponse,
+    ProjectionResponse,
     SubskillOptionsResponse,
+    TemperamentItemsResponse,
+    TemperamentProfile,
     CommunityCommentSubmit,
     CommunityListResponse,
     CommunityPost,
@@ -90,6 +96,10 @@ app = FastAPI(
     version=__version__,
     description="학생 적성·학령 기반 커리큘럼 추천 + 교육 path 엔진 (MVP)",
 )
+
+# 응답 압축(70KB HTML·대형 JSON) — 모바일 체감 속도 개선
+from fastapi.middleware.gzip import GZipMiddleware
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 _STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
@@ -236,6 +246,39 @@ def get_cognitive_items() -> CognitiveItemsResponse:
 def post_cognitive(profile: StudentProfile) -> CognitiveProfile:
     """행동 문항 응답 → 5영역 인지 성향 프로파일(또래 대비 밴드, 진단 아님, 무과금)."""
     return cognitive.build_cognitive(profile.behaviors)
+
+
+@app.get("/api/temperament-items", response_model=TemperamentItemsResponse)
+def get_temperament_items() -> TemperamentItemsResponse:
+    """기질 관찰 문항(Rothbart CBQ 3요인 착안: 외향성·정서민감성·의도적조절). 진단 아님."""
+    return TemperamentItemsResponse(
+        scale=temperament.SCALE, items=temperament.items(),
+        note="기질에는 좋고 나쁨이 없어요 — 아이에게 맞는 환경(조화의 적합성)을 찾기 위한 참고입니다.")
+
+
+@app.post("/api/temperament", response_model=TemperamentProfile)
+def post_temperament(profile: StudentProfile) -> TemperamentProfile:
+    """행동 응답(tp_*) → 기질 3요인 프로파일 + 유형 + 환경 가이드(무과금, 진단 아님)."""
+    return temperament.build_temperament(profile.behaviors)
+
+
+@app.post("/api/projection", response_model=ProjectionResponse)
+def post_projection(profile: StudentProfile) -> ProjectionResponse:
+    """예상 능력치 전망 — 성장도표 개념 + Gagné DMGT 촉매 논리(낙관/기본/보수 3밴드, 참고용)."""
+    return build_projection(profile)
+
+
+@app.post("/api/summary")
+def post_summary(profile: StudentProfile) -> dict:
+    """결과 화면 전 섹션을 **한 번에** 계산(기존 16회 호출 → 1회). 무과금."""
+    from .summary import build_summary
+    return build_summary(profile)
+
+
+@app.get("/api/frameworks", response_model=FrameworksResponse)
+def get_frameworks() -> FrameworksResponse:
+    """본 서비스가 차용한 공신력 평가·발달 체계 목록(투명성 공개)."""
+    return FrameworksResponse(frameworks=all_frameworks())
 
 
 @app.get("/api/subskills", response_model=SubskillOptionsResponse)

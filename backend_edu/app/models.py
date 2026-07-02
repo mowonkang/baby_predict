@@ -330,6 +330,8 @@ class PersonaResponse(BaseModel):
     study_mode: str
     subject_levels: dict[str, str]
     note: str
+    temperament_label: str = ""   # 기질 유형(CBQ 착안) — 입력 시 페르소나에 결합
+    fit_guide: str = ""           # 기질에 맞는 환경 가이드(goodness of fit)
 
 
 class ReportSection(BaseModel):
@@ -422,6 +424,8 @@ class TechNode(BaseModel):
     recommended: bool = False  # 추천 루트에 포함?
     reason: str = ""       # 추천 이유(추천 노드일 때)
     done: bool = False     # 이미 경험한 단계(입력한 활동 반영)
+    cert: str = ""         # 이 단계의 공인 등급/급수 목표(예: "CEFR A1", "국기원 1품")
+    stage: str = ""        # 재능발달 단계(Gagné DMGT/Bloom: 탐색·흥미 / 기술 습득 / 전문화)
 
 
 class TechTrack(BaseModel):
@@ -432,6 +436,7 @@ class TechTrack(BaseModel):
     stat: str              # 이 트랙이 키우는 대표 능력치 key
     nodes: list[TechNode]  # tier 순 정렬
     recommended: bool = False  # 이 트랙 자체가 추천 계열인지
+    cert_system: str = ""  # 공인 등급 체계명(예: "CEFR(유럽공통참조기준)")
 
 
 class TechTreeResponse(BaseModel):
@@ -584,6 +589,70 @@ class SubskillDetail(BaseModel):
     what: str          # 무엇이 부족/양호한지
     how: str           # 어떻게 보완/심화
     weak: bool
+
+
+# ── 기질 프로파일 (Rothbart CBQ 3요인 착안, 진단 아님) ─────────────
+class TemperamentItem(BaseModel):
+    id: str
+    factor: str        # surgency / negative_affect / effortful_control
+    text: str          # 관찰 가능한 행동 서술
+
+
+class TemperamentItemsResponse(BaseModel):
+    scale: list[str]
+    items: list[TemperamentItem]
+    note: str
+
+
+class TemperamentFactor(BaseModel):
+    key: str
+    label: str             # 외향성·활동성 / 정서 민감성 / 의도적 조절
+    level: str             # 높음 / 중간 / 낮음
+    score: int             # 0~100 (50=또래 중간 가정)
+    parenting_tip: str     # 이 기질에 맞는 양육·학습 환경 한 줄
+    answered: int = 0
+
+
+class TemperamentProfile(BaseModel):
+    factors: list[TemperamentFactor]
+    type_label: str        # 기질 유형 라벨(예: "활발·긍정형") — Thomas&Chess 유형 참조
+    fit_guide: str         # '조화의 적합성(goodness of fit)' 기반 환경 가이드
+    answered: int
+    note: str = ("Rothbart CBQ 3요인(외향성·부정정서·의도적 통제)에서 착안한 관찰형 참고 프로파일 — "
+                 "임상 기질검사·진단이 아니며, 기질은 좋고 나쁨이 없는 개성입니다.")
+
+
+# ── 예상 능력치 전망 (성장곡선 개념 + Gagné DMGT 촉매, 참고용) ─────
+class StatProjection(BaseModel):
+    key: str
+    label: str
+    now: int               # 현재 능력치(0~100)
+    conservative: int      # 보수(현 수준 유지·투자 적음)
+    base: int              # 기본(추천 루트 이행)
+    optimistic: int        # 낙관(루트 이행 + 촉매 우호)
+
+
+class ProjectionResponse(BaseModel):
+    horizon_label: str     # 전망 시점(예: "중등 진입 시(약 3년 후)")
+    projections: list[StatProjection]
+    drivers: list[str]     # 전망을 끌어올리는 요인(투자·촉매) — DMGT 근거
+    note: str = ("성장도표(백분위 트래킹) 개념과 Gagné DMGT(재능 = 타고난 능력 × 개발 투자 × 촉매)를 "
+                 "차용한 참고 전망 — 개인 미래 예측이 아니며 보장되지 않습니다.")
+
+
+# ── 공신력 체계 레지스트리 (투명성: 무엇을 참고했는지) ────────────
+class FrameworkRef(BaseModel):
+    key: str
+    name: str              # 체계 이름(예: K-WISC-V)
+    authority: str         # 주관(예: 피어슨/인싸이트, 질병관리청)
+    what: str              # 무엇을 보는지
+    how_used: str          # 우리 서비스가 어떻게 차용했는지
+    caveat: str = ""       # 한계·주의
+
+
+class FrameworksResponse(BaseModel):
+    frameworks: list[FrameworkRef]
+    note: str = "본 서비스는 아래 공신력 있는 체계의 '구조'를 차용한 참고 도구이며, 각 검사 자체를 시행하지 않습니다."
 
 
 # 전방 참조(AchievementResponse → SubskillDetail) 해소

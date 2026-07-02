@@ -63,6 +63,7 @@ pytest -q                       # 테스트 17건
 | [docs/edu/육성엔진_설계.md](docs/edu/육성엔진_설계.md) | 능력치 스탯(8각) + 사교육 테크트리·추천 루트(프린세스메이커식, 무과금) 설계 |
 | [docs/edu/지역커뮤니티_연동.md](docs/edu/지역커뮤니티_연동.md) | 실제 학원·지도(카카오/네이버)·맘카페 연동 + 엄마들 인앱 커뮤니티 설계 |
 | [docs/edu/인지프로파일_WISC참고.md](docs/edu/인지프로파일_WISC참고.md) | 관찰형 인지 성향(웩슬러 5영역 착안)·성취 하위스킬 또래비교 설계(진단 아님, 무과금) |
+| [docs/edu/평가체계_벤치마킹.md](docs/edu/평가체계_벤치마킹.md) | 공신력 평가체계 전수조사(CBQ·K-DST·MI·DMGT·CEFR 등) + 기질·예상능력치 반영 설계 |
 | [docs/edu/데이터소스.md](docs/edu/데이터소스.md) | 교육 외부 데이터 소스 |
 
 ### MVP (코드 + 앱)
@@ -75,7 +76,7 @@ pytest -q                       # 테스트 17건
 ```bash
 cd backend_edu && pip install -r requirements.txt
 uvicorn app.main:app --reload   # 앱: http://localhost:8000/
-pytest -q                       # 테스트 144건
+pytest -q                       # 테스트 161건
 ```
 
 자세한 내용은 [backend_edu/README.md](backend_edu/README.md) 참조.
